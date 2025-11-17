@@ -22,9 +22,4 @@ export class SyscallExecutor {
                 break;
         }
     }
-
-    // Actual syscalls:
-    private print(...str: any[]): number {
-        return print(...str);
-    }
 }

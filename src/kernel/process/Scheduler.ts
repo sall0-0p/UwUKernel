@@ -47,7 +47,7 @@ export class Scheduler {
             cycles++;
 
             this.checkSleepingThreads();
-            os.sleep(0.016);
+            coroutine.yield();
         }
     }
 

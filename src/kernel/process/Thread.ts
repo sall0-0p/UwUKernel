@@ -32,8 +32,6 @@ export class Thread {
         }
 
         setfenv(executable, parent.environment);
-        // @ts-ignore
-        // parent.environment.print("Print is here!");
         this.thread = coroutine.create(executable);
         this.state = ThreadState.Ready;
     }
