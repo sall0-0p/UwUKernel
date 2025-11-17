@@ -5,7 +5,8 @@
   "main": "main.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "source deploy.sh"
+    "build": "source deploy.sh",
+    "watch": "nodemon --watch \"src/**/*.ts\" --ext ts --exec \"./deploy.sh\""
   },
   "devDependencies": {
     "typescript": "^5.1.0",
