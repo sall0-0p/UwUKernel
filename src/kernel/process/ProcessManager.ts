@@ -18,7 +18,7 @@ export class ProcessManager {
      */
     public createProcess(cwd: string, code: string, parent?: Process): Process {
         const newProcess = new Process(cwd, parent);
-        newProcess.environment = EnvironmentFactory.getEnvironment();
+        newProcess.environment = EnvironmentFactory.getEnvironment(newProcess);
 
         const mainThread = new Thread(newProcess, code);
         newProcess.addThread(mainThread);

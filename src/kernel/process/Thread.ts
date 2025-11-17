@@ -1,10 +1,16 @@
 import {Process} from "./Process";
+import {BaseEvent, EventType} from "./Event";
 
 export enum ThreadState {
     Running = "RUNNING",
     Waiting = "WAITING",
     Ready = "READY",
     Terminated = "TERMINATED",
+}
+
+export enum WaitingReason {
+    Sleep = "sleep",
+    Event = "event",
 }
 
 export type TID = number;
@@ -15,6 +21,12 @@ export class Thread {
     public state: ThreadState;
     public nextRunArguments: any[] = [];
     public wakeUpAt: number | null;
+    public lastEventIndex: number = 0;
+
+    // Properties when waiting for events.
+    public eventFilter: EventType[] | null
+    public waitingReason: WaitingReason | null;
+    public waitingTimeout: number | null;
 
     /**
      * Creates new thread object.
@@ -34,6 +46,12 @@ export class Thread {
         setfenv(executable, parent.environment);
         this.thread = coroutine.create(executable);
         this.state = ThreadState.Ready;
+    }
+
+    public isEventInFilter(event: BaseEvent) {
+        if (!this.eventFilter) return false;
+        if (this.eventFilter.length === 0) return true;
+        return this.eventFilter.includes(event.type);
     }
 }
 

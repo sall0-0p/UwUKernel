@@ -1,5 +1,8 @@
-import {Thread, ThreadState, TID} from "./Thread";
+import {Thread, ThreadState, TID, WaitingReason} from "./Thread";
 import {SyscallExecutor} from "./SyscallExecutor";
+import {EventManager} from "./EventManager";
+import {Logger} from "../lib/Logger";
+import {BaseEvent, EventType} from "./Event";
 
 // Time in ms, after which preemption should happen.
 const QUANT = 100;
@@ -16,7 +19,9 @@ export class Scheduler {
 
     private threads: Map<TID, Thread> = new Map();
     private readyThreads: Thread[] = [];
-    private sleepingThreads: Thread[] = [];
+    private waitingThreads: Thread[] = [];
+
+    public eventManager: EventManager;
 
     public constructor() {
         this.syscallExecutor = new SyscallExecutor(this);
@@ -46,13 +51,19 @@ export class Scheduler {
             // Iterate and display cycle count
             cycles++;
 
-            this.checkSleepingThreads();
-            coroutine.yield();
+            this.checkWaitingThreads();
+            const [...eventData] = os.pullEventRaw();
+            this.eventManager.dispatch(eventData);
         }
     }
 
     public readyThread(thread: Thread, args?: any[]) {
+        thread.waitingReason = null;
+        thread.waitingTimeout = null;
+        thread.eventFilter = null;
+        thread.wakeUpAt = null;
         thread.nextRunArguments = args || [];
+
         thread.state = ThreadState.Ready;
         this.readyThreads.push(thread);
     }
@@ -60,7 +71,10 @@ export class Scheduler {
     public putThreadToSleep(thread: Thread, wakeUpAt: number, args?: any[]) {
         thread.wakeUpAt = wakeUpAt;
         thread.nextRunArguments = args || [];
-        this.sleepingThreads.push(thread);
+        thread.waitingReason = WaitingReason.Sleep;
+        thread.state = ThreadState.Waiting;
+
+        this.waitingThreads.push(thread);
     }
 
     // Helpers
@@ -80,24 +94,38 @@ export class Scheduler {
 
             this.handleReturns(thread, interruptReason, result);
         } else {
+            Logger.warn("Thread %s exited due to error / end of execution!", thread.tid)
+            Logger.warn("Message: %s", interruptReason);
             thread.state = ThreadState.Terminated;
         }
 
         debug.sethook();
     }
 
-    private checkSleepingThreads() {
+    private checkWaitingThreads() {
         const newSleeps: Thread[] = [];
-        while (this.sleepingThreads.length > 0) {
-            const thread = this.sleepingThreads.pop();
-            if (thread && thread.wakeUpAt < os.epoch("utc")) {
-                this.readyThreads.push(thread);
-                thread.state = ThreadState.Ready;
-            } else {
-                newSleeps.push(thread);
+        while (this.waitingThreads.length > 0) {
+            const thread = this.waitingThreads.pop();
+            switch (thread.waitingReason) {
+                case WaitingReason.Sleep:
+                    if (thread.wakeUpAt < os.epoch("utc")) {
+                        this.readyThreads.push(thread);
+                        thread.state = ThreadState.Ready;
+                    } else {
+                        newSleeps.push(thread);
+                    }
+                    break;
+                case WaitingReason.Event:
+                    if (thread.waitingTimeout < os.epoch("utc")) {
+                        this.readyThreads.push(thread);
+                        thread.state = ThreadState.Ready;
+                        thread.nextRunArguments = [null, null];
+                    }
+                    break;
             }
+
         }
-        this.sleepingThreads = newSleeps;
+        this.waitingThreads = newSleeps;
     }
 
     private handleReturns(thread: Thread, interruptReason: InterruptionReason, args: any[]) {
@@ -108,5 +136,27 @@ export class Scheduler {
             thread.state = ThreadState.Ready;
             this.readyThreads.push(thread);
         }
+    }
+
+    // Event management is here, to an extent.
+    public waitForEvent(thread: Thread, filter: EventType[], timeout: number) {
+        thread.state = ThreadState.Waiting;
+        thread.waitingReason = WaitingReason.Event;
+        thread.waitingTimeout = os.epoch("utc") + timeout;
+        thread.eventFilter = filter;
+        this.waitingThreads.push(thread);
+    }
+
+    public broadcastEventToAll(event: BaseEvent) {
+        const newWaitingThreads: Thread[] = [];
+        while (this.waitingThreads.length > 0) {
+            const thread = this.waitingThreads.shift();
+            if (thread.isEventInFilter(event)) {
+                this.readyThread(thread, [event]);
+            } else {
+                newWaitingThreads.push(thread);
+            }
+        }
+        this.waitingThreads = newWaitingThreads;
     }
 }

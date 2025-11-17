@@ -1,10 +1,19 @@
 import {Thread, TID} from "./Thread";
+import {IReadHandle, IWriteHandle} from "./handle/IHandle";
+import {TerminalHandle} from "./handle/TerminalHandle";
+import {BaseEvent} from "./Event";
+import {KeyboardHandle} from "./handle/KeyboardHandle";
 
 export type PID = number;
 export class Process {
     public readonly pid: PID = PIDCounter.getNextPID();
     public readonly parent: Process | null;
     public readonly threads: Map<TID, Thread> = new Map();
+    public readonly eventQueue: BaseEvent[] = [];
+
+    public stdin: IReadHandle = new KeyboardHandle();
+    public stdout: IWriteHandle = new TerminalHandle();
+    public stderr: IWriteHandle = new TerminalHandle();
 
     public environment: object;
     public workingDir: string;
