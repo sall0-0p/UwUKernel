@@ -28,6 +28,8 @@ export class Scheduler {
     }
 
     public run() {
+        let schedulerTimer = os.startTimer(1);
+
         while (true) {
             this.checkWaitingThreads();
             while (this.readyThreads.length > 0) {
@@ -41,10 +43,16 @@ export class Scheduler {
                 }
             }
 
-            os.startTimer(1);
+            // Wait for next event;
             const [...eventData] = os.pullEventRaw();
+
+
             if (eventData[0] === "terminate") break;
-            this.eventManager.dispatch(eventData);
+            if (eventData[0] === "timer" && eventData[1] === schedulerTimer) {
+                schedulerTimer = os.startTimer(0.05);
+            } else {
+                this.eventManager.dispatch(eventData);
+            }
         }
     }
 

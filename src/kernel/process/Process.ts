@@ -6,7 +6,7 @@ import {KeyboardHandle} from "./handle/KeyboardHandle";
 import {Scheduler} from "./Scheduler";
 
 // The maximum size of process event queue.
-const MAX_PROCESS_QUEUE_SIZE = 128;
+const MAX_PROCESS_QUEUE_SIZE = 16;
 // The time events are purged after.
 const EVENT_LIFESPAN = 5000;
 
