@@ -6,8 +6,11 @@ export class TerminalHandle implements IWriteHandle {
     }
 
     writeLine(text: string): void {
-        term.scroll(1);
-        term.setCursorPos(1, term.getCursorPos()[1]);
+        const y = term.getCursorPos()[1];
+        term.setCursorPos(1, y);
+        if (y > term.getSize()[1]) {
+            term.scroll(1);
+        }
         term.write(text);
     }
 

@@ -1,9 +1,8 @@
 import {Thread, ThreadState, TID, WaitingReason} from "./Thread";
-import {Syscall, SyscallExecutor} from "./SyscallExecutor";
+import {SyscallExecutor} from "./SyscallExecutor";
 import {EventManager} from "./EventManager";
 import {Logger} from "../lib/Logger";
 import {EventType, IEvent} from "./Event";
-import {PID} from "./Process";
 import {ProcessManager} from "./ProcessManager";
 
 // Time in ms, after which preemption should happen.
@@ -32,8 +31,10 @@ export class Scheduler {
 
         while (true) {
             this.checkWaitingThreads();
-            while (this.readyThreads.length > 0) {
-                const thread = this.readyThreads.shift();
+            const cycleThreads = [...this.readyThreads];
+            while (cycleThreads.length > 0) {
+                const thread = cycleThreads.shift();
+                this.readyThreads.shift();
                 if (thread) {
                     if (thread.state === ThreadState.Ready) {
                         this.executeThread(thread);
@@ -45,7 +46,6 @@ export class Scheduler {
 
             // Wait for next event;
             const [...eventData] = os.pullEventRaw();
-
 
             if (eventData[0] === "terminate") break;
             if (eventData[0] === "timer" && eventData[1] === schedulerTimer) {
@@ -94,7 +94,7 @@ export class Scheduler {
             this.handleReturns(thread, interruptReason, result);
         } else {
             Logger.warn("Thread %s exited due to error / end of execution!", thread.tid)
-            Logger.warn("Message: %s", interruptReason);
+            Logger.warn("Reason: %s", interruptReason || "Finished execution.");
             thread.state = ThreadState.Terminated;
         }
 

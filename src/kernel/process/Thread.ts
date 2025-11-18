@@ -1,5 +1,6 @@
 import {Process} from "./Process";
 import {IEvent, EventType} from "./Event";
+import {Logger} from "../lib/Logger";
 
 export enum ThreadState {
     Running = "RUNNING",
@@ -38,6 +39,8 @@ export class Thread {
 
         const [executable, err] = loadstring(code);
         if (!executable) {
+            Logger.error("Failed to parse code for thread %s", this.tid);
+            Logger.error("Message: %s", err);
             this.thread = coroutine.create(() => {});
             this.state = ThreadState.Terminated;
             return;

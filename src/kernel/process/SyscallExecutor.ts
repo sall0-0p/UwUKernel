@@ -37,6 +37,12 @@ export class SyscallExecutor {
 
     }
 
+    /**
+     * Executing syscall
+     * @param thread - thread for which syscall is executed.
+     * @param syscall - syscall to execute.
+     * @param args - args (starting from 0 in TS) for a syscall.
+     */
     public execute(thread: Thread, syscall: Syscall, args: any[]) {
         const process: Process = thread.parent;
         const stdin: IReadHandle = process.stdin;
@@ -59,50 +65,50 @@ export class SyscallExecutor {
                 this.pullEvent(thread, filter, timeout);
                 break;
             }
-
-            // Stdin syscalls
             case Syscall.StdinIsEmpty: {
-                const count: number = args[1];
+                const count: number = args[0];
                 const result = stdin.read(count);
                 this.scheduler.readyThread(thread, [result]);
                 break;
             }
             case Syscall.StdinRead: {
-                const count: number = args[1];
+                const count: number = args[0];
                 const result = stdin.read(count);
                 this.scheduler.readyThread(thread, [result]);
                 break;
             }
             case Syscall.StdinReadAll: {
-                const count: number = args[1];
+                const count: number = args[0];
                 const result = stdin.read(count);
                 this.scheduler.readyThread(thread, [result]);
                 break;
             }
             case Syscall.StdinReadLine: {
-                const count: number = args[1];
+                const count: number = args[0];
                 const result = stdin.read(count);
                 this.scheduler.readyThread(thread, [result]);
                 break;
             }
-
-            // Stdout syscalls
             case Syscall.StdoutWrite: {
-                const text: string = args[1];
+                const text: string = args[0];
                 stdout.write(text);
+                this.scheduler.readyThread(thread, []);
                 break;
             }
             case Syscall.StdoutWriteLine: {
-                const text: string = args[1];
+                const text: string = args[0];
                 stdout.writeLine(text);
+                this.scheduler.readyThread(thread, []);
                 break;
             }
             case Syscall.StdoutFlush: {
                 stdout.flush();
+                this.scheduler.readyThread(thread, []);
                 break;
             }
             case Syscall.StdoutClose: {
                 stdout.close();
+                this.scheduler.readyThread(thread, []);
                 break;
             }
         }

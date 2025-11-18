@@ -61,7 +61,7 @@ export namespace EnvironmentFactory {
 
                 read(count?: number): string | number[] | null  {
                     // @ts-ignore
-                    const [data] = coroutine.yield("syscall", Syscall.StdinRead, ____ || 1);
+                    const [data] = coroutine.yield("syscall", Syscall.StdinRead, self || 1);
                     return data;
                 },
 
@@ -79,12 +79,12 @@ export namespace EnvironmentFactory {
             stdout: {
                 write(text: string): void {
                     // @ts-ignore
-                    coroutine.yield("syscall", Syscall.StdoutWrite, ____);
+                    coroutine.yield("syscall", Syscall.StdoutWrite, self);
                 },
 
                 writeLine(text: string): void {
                     // @ts-ignore
-                    coroutine.yield("syscall", Syscall.StdoutWriteLine, ____);
+                    coroutine.yield("syscall", Syscall.StdoutWriteLine, self);
                 },
 
                 flush(): void {

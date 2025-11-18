@@ -1,5 +1,5 @@
 import {Thread, ThreadState, TID} from "./Thread";
-import {IReadHandle, IWriteHandle} from "./handle/IHandle";
+import {IHandle, IReadHandle, IWriteHandle} from "./handle/IHandle";
 import {TerminalHandle} from "./handle/TerminalHandle";
 import {IEvent} from "./Event";
 import {KeyboardHandle} from "./handle/KeyboardHandle";
@@ -27,12 +27,17 @@ export class Process {
     public stdout: IWriteHandle = new TerminalHandle();
     public stderr: IWriteHandle = new TerminalHandle();
 
+    public handles: Map<number, IHandle> = new Map();
+
     public environment: object;
     public workingDir: string;
 
     public constructor(workingDir: string, parent?: Process) {
         this.workingDir = workingDir;
         this.parent = parent;
+        this.handles.set(0, this.stdin);
+        this.handles.set(1, this.stdout);
+        this.handles.set(2, this.stderr);
     }
 
     public addThread(thread: Thread) {
