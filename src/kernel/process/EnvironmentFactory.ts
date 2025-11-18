@@ -53,6 +53,73 @@ export namespace EnvironmentFactory {
                 },
             },
 
+            stdin: {
+                isEmpty(): boolean {
+                    const [bool] = coroutine.yield("syscall", Syscall.StdinIsEmpty);
+                    return bool;
+                },
+
+                read(count?: number): string | number[] | null  {
+                    // @ts-ignore
+                    const [data] = coroutine.yield("syscall", Syscall.StdinRead, ____ || 1);
+                    return data;
+                },
+
+                readLine(): string | null {
+                    const [data] = coroutine.yield("syscall", Syscall.StdinReadLine);
+                    return data;
+                },
+
+                readAll(): string | number[] | null {
+                    const [data] = coroutine.yield("syscall", Syscall.StdinReadAll);
+                    return data;
+                }
+            },
+
+            stdout: {
+                write(text: string): void {
+                    // @ts-ignore
+                    coroutine.yield("syscall", Syscall.StdoutWrite, ____);
+                },
+
+                writeLine(text: string): void {
+                    // @ts-ignore
+                    coroutine.yield("syscall", Syscall.StdoutWriteLine, ____);
+                },
+
+                flush(): void {
+                    coroutine.yield("syscall", Syscall.StdoutFlush);
+                },
+
+                close(): void {
+                    coroutine.yield("syscall", Syscall.StdoutClose);
+                },
+            },
+
+            stderr: {
+                write(): void {
+                    // @ts-ignore
+                    coroutine.yield("syscall", Syscall.StderrWrite, ____);
+                },
+
+                writeLine(): void {
+                    // @ts-ignore
+                    coroutine.yield("syscall", Syscall.StderrWriteLine, ____);
+                },
+
+                flush(): void {
+                    coroutine.yield("syscall", Syscall.StderrFlush);
+                },
+
+                close(): void {
+                    coroutine.yield("syscall", Syscall.StderrClose);
+                },
+            },
+
+            _G: {
+
+            },
+
             term: term,
         }
     }

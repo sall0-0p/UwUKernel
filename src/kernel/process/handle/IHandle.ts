@@ -5,20 +5,10 @@ export interface IHandle {
 export interface IReadHandle extends IHandle {
     isEmpty(): boolean;
 
-    // Read all's
-    readAll(): string;
-    readAllNumbers(): number[];
-    readAllLines(): string[];
-    readAllChars(): string[];
-    readAllStrings(): string[];
-    readAllBytes(): number[];
-
     // Reads
-    readNumber(): number;
-    readLine(): string;
-    readChar(): string;
-    readString(): string;
-    readByte(): number;
+    read(count: number): string | number[] | null;
+    readLine(): string | null;
+    readAll(): string | number[] | null;
 }
 
 export interface IWriteHandle extends IHandle {

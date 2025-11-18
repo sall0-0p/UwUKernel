@@ -15,11 +15,11 @@ scheduler.eventManager = em;
 scheduler.processManager = pm;
 scheduler.syscallExecutor = se;
 
-// const code1 = "_G.counter = 0; while true do _G.counter = _G.counter + 1 end";
-// const process1 = pm.createProcess("/", code1);
-//
-// const code2 = "while true do term.setCursorPos(1, 2) term.write(_G.counter) end";
-// const thread2 = pm.createThread(code2, process1);
+const code1 = "print('Running 1!') _G.counter = 0; while true do _G.counter = _G.counter + 1 end";
+const process1 = pm.createProcess("/", code1);
+
+const code2 = "print('Running 2!') while true do term.setCursorPos(1, 2) term.write(_G.counter) end";
+const thread2 = pm.createThread(code2, process1);
 // //
 // const code3 = "print('Hallo from third thread, shall die here!');"
 // const thread3 = pm.createThread(code3, process1);
@@ -29,9 +29,9 @@ scheduler.syscallExecutor = se;
 
 // const code5 = "print('Testing sleep! Zzz Zzz Zzz') sleep(1) print('Woke up!')";
 // const process5 = pm.createProcess("/", code5);
-
-const code6 = "print(os.version())"
-const process6 = pm.createProcess("/", code6);
+//
+// const code6 = "stdout.writeLine(os.version())"
+// const process6 = pm.createProcess("/", code6);
 
 const code7 = "while true do local data = os.pullEvent({'char'}, 5); if data then print(data.props.char) else print('Expired after 5s') end end";
 const process7 = pm.createProcess("/", code7);
