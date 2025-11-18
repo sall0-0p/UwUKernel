@@ -1,13 +1,24 @@
 import {Scheduler} from "./Scheduler";
 import {EventType, IEvent, RoutingType} from "./Event";
 import {ProcessManager} from "./ProcessManager";
-import {PID} from "./Process";
+import {PID, Process} from "./Process";
 import {Logger} from "../lib/Logger";
 
 export class EventManager {
     public constructor(private scheduler: Scheduler, private processManager: ProcessManager) {
     }
 
+    // Focused process designation;
+    private focusedProcess: Process;
+    public getFocusedProcess() {
+        return this.focusedProcess;
+    }
+
+    public setFocusedProcess(process: Process) {
+        this.focusedProcess = process;
+    }
+
+    // Dispatching events
     public dispatch(rawEventData: any[]) {
         const eventType: EventType = rawEventData[0];
         let event: IEvent | null = null;
@@ -16,7 +27,7 @@ export class EventManager {
             case EventType.Key:
                 event = {
                     type: eventType,
-                    routingType: RoutingType.Broadcast,
+                    routingType: RoutingType.Focused,
                     props: {
                         key: rawEventData[1],
                         isHeld: rawEventData[2],
@@ -26,7 +37,7 @@ export class EventManager {
             case EventType.Char:
                 event = {
                     type: eventType,
-                    routingType: RoutingType.Broadcast,
+                    routingType: RoutingType.Focused,
                     props: {
                         char: rawEventData[1],
                     }
@@ -58,6 +69,9 @@ export class EventManager {
         switch (event.routingType) {
             case RoutingType.Broadcast:
                 this.broadcastEvent(event);
+                break;
+            case RoutingType.Focused:
+                if (this.focusedProcess) this.sendEventTo(event, this.focusedProcess.pid);
                 break;
         }
     }

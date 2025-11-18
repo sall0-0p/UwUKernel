@@ -35,6 +35,9 @@ export namespace EnvironmentFactory {
                     coroutine.yield("syscall", Syscall.Sleep, ____);
                 },
 
+                /**
+                 * Returns os version as a string;
+                 */
                 version: (): string => {
                     return "First version for you!";
                 },
@@ -51,6 +54,14 @@ export namespace EnvironmentFactory {
                     const [data] = coroutine.yield("syscall", Syscall.PullEvent, ____ || [], timeout || math.huge);
                     return data;
                 },
+
+                /**
+                 * Makes you foreground process.
+                 * Will be removed later.
+                 */
+                setForegroundProcess: () => {
+                    coroutine.yield("syscall", Syscall.SetForegroundProcess);
+                }
             },
 
             stdin: {

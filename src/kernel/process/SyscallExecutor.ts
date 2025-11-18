@@ -7,9 +7,13 @@ import {HandleId, Process} from "./Process";
 import {IReadHandle, IWriteHandle} from "./handle/IHandle";
 
 export enum Syscall {
+    // Default syscalls
     Print = "print",
     Sleep = "os.sleep",
     PullEvent = "os.pullEvent",
+
+    // My syscalls
+    SetForegroundProcess = "os.setForegroundProcess",
 
     // Stdin
     rHandleIsEmpty = "handle.isEmpty",
@@ -56,6 +60,10 @@ export class SyscallExecutor {
                 thread.parent.pullEvent(thread, filter, timeout);
                 break;
             }
+
+            // My syscalls
+            case Syscall.SetForegroundProcess:
+                this.eventManager.setFocusedProcess(thread.parent);
 
             // File descriptor reading and writing
             case Syscall.rHandleRead: {

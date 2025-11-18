@@ -26,7 +26,7 @@ export class KeyboardHandle implements IReadHandle, IProcessInterceptor {
         let isLineBreak = false;
         let wasRecorded = false;
 
-        // this.echo(event);
+        this.echo(event);
 
         // if character put into buffer
         if (event.type === EventType.Char) {
@@ -141,6 +141,15 @@ export class KeyboardHandle implements IReadHandle, IProcessInterceptor {
         if (stdout && stdout instanceof TerminalHandle) {
             if (event.type === EventType.Char) {
                 stdout.write(event.props.char);
+            } else if (event.type === EventType.Key) {
+                if (event.props.key === keys.enter) {
+                    stdout.writeLine("");
+                } else if (event.props.key === keys.backspace) {
+                    let [x, y] = term.getCursorPos();
+                    term.setCursorPos(x-1, y);
+                    stdout.write(" ");
+                    term.setCursorPos(x-1, y);
+                }
             }
         }
     }
