@@ -25,7 +25,9 @@ export enum Syscall {
     wHandleWrite = "handle.write",
     wHandleWriteLine = "handle.writeLine",
     wHandleFlush = "handle.flush",
-    wHandleClose = "handle.close",
+
+    // Any
+    aHandleClose = "handle.close",
 }
 
 export class SyscallExecutor {
@@ -152,7 +154,7 @@ export class SyscallExecutor {
                 }
                 break;
             }
-            case Syscall.wHandleClose: {
+            case Syscall.aHandleClose: {
                 const handleId: HandleId = args[0];
                 const handle = process.getHandle(handleId);
                 if (handle && "close" in handle) {
@@ -161,6 +163,7 @@ export class SyscallExecutor {
                 } else {
                     this.scheduler.readyThread(thread, ["Bad file descriptor"]);
                 }
+                thread.parent.removeHandle(handleId);
                 break;
             }
         }

@@ -135,6 +135,10 @@ export class KeyboardHandle implements IReadHandle, IProcessInterceptor {
         error("Method not implemented.");
     }
 
+    close() {
+        
+    }
+
     // Echoing
     private echo(event: IEvent) {
         const stdout = this.currentProcess.getHandle(1);

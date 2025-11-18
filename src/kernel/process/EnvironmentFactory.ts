@@ -84,7 +84,11 @@ export namespace EnvironmentFactory {
                 readAll(): string | number[] | null {
                     const [data] = coroutine.yield("syscall", Syscall.rHandleReadAll, 0);
                     return data;
-                }
+                },
+
+                close(): void {
+                    coroutine.yield("syscall", Syscall.aHandleClose, 0);
+                },
             },
 
             stdout: {
@@ -103,7 +107,7 @@ export namespace EnvironmentFactory {
                 },
 
                 close(): void {
-                    coroutine.yield("syscall", Syscall.wHandleClose, 1);
+                    coroutine.yield("syscall", Syscall.aHandleClose, 1);
                 },
             },
 
@@ -123,7 +127,7 @@ export namespace EnvironmentFactory {
                 },
 
                 close(): void {
-                    coroutine.yield("syscall", Syscall.wHandleClose, 2);
+                    coroutine.yield("syscall", Syscall.aHandleClose, 2);
                 },
             },
 

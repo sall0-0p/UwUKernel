@@ -4,6 +4,7 @@ import {Thread} from "../Thread";
 export interface IHandle {
     onAdded?(process: Process, id: HandleId): void;
     onRemoved?(process: Process, id: HandleId): void;
+    close(thread?: Thread): void;
 }
 
 export interface IReadHandle extends IHandle {
@@ -19,5 +20,4 @@ export interface IWriteHandle extends IHandle {
     write(text: string, thread?: Thread): void;
     writeLine(text: string, thread?: Thread): void;
     flush(thread?: Thread): void;
-    close(thread?: Thread): void;
 }
