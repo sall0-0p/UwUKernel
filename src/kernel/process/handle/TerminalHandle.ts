@@ -1,6 +1,17 @@
 import {IWriteHandle} from "./IHandle";
+import {Thread} from "../Thread";
+import {HandleId, Process} from "../Process";
 
 export class TerminalHandle implements IWriteHandle {
+
+    onAdded(process: Process, id: HandleId) {
+
+    }
+
+    onRemoved(process: Process, id: HandleId) {
+
+    }
+
     write(text: string): void {
         term.write(text);
     }

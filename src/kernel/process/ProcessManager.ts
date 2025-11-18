@@ -5,7 +5,7 @@ import {Scheduler} from "./Scheduler";
 
 export class ProcessManager {
     public readonly processes: Map<PID, Process> = new Map();
-    private scheduler: Scheduler;
+    private readonly scheduler: Scheduler;
     public constructor(scheduler: Scheduler) {
         this.scheduler = scheduler;
     }
@@ -17,7 +17,7 @@ export class ProcessManager {
      * @param parent parent process (can be nill).
      */
     public createProcess(cwd: string, code: string, parent?: Process): Process {
-        const newProcess = new Process(cwd, parent);
+        const newProcess = new Process(this.scheduler, cwd, parent);
         newProcess.environment = EnvironmentFactory.getEnvironment(newProcess);
 
         const mainThread = new Thread(newProcess, code);

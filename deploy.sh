@@ -16,3 +16,9 @@ rm -rf "$DEST_PATH"
 cp -R "$BUILD_DIR" "$DEST_PATH"
 
 echo "Deploy complete."
+
+# --- Play a success sound ---
+# Note: afplay is a macOS utility. For Linux environments, you would use
+# tools like 'aplay' or 'paplay', or a custom solution.
+# The '&' runs the sound command in the background so the script exits immediately.
+afplay -v 5.0 /System/Library/Sounds/Purr.aiff &

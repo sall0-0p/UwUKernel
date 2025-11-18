@@ -33,7 +33,7 @@ scheduler.syscallExecutor = se;
 const code6 = "stdout.writeLine(os.version())"
 const process6 = pm.createProcess("/", code6);
 
-const code7 = "while true do local data = os.pullEvent({'char'}, 5); if data then print(data.props.char) else print('Expired after 5s') end end";
+const code7 = "while true do local result = stdin.readLine(1); if result == nil then print('nil'); else print(result); end end";
 const process7 = pm.createProcess("/", code7);
 
 scheduler.run();

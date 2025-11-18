@@ -14,7 +14,6 @@ export class EventManager {
 
         switch (eventType) {
             case EventType.Key:
-                // event = new KeyEvent(rawEventData[1], rawEventData[2]);
                 event = {
                     type: eventType,
                     routingType: RoutingType.Broadcast,
@@ -66,13 +65,13 @@ export class EventManager {
     private broadcastEvent(event: IEvent) {
         const processes = this.processManager.getAllProcesses();
         processes.forEach((p) => {
-            p.queueEvent(event, this.scheduler);
+            p.queueEvent(event);
         })
     }
 
     private sendEventTo(event: IEvent, pid: PID) {
         const process = this.processManager.getProcessByPID(pid);
         if (!process) Logger.error("Process not found!");
-        process.queueEvent(event, this.scheduler);
+        process.queueEvent(event);
     }
 }

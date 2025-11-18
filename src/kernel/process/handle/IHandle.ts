@@ -1,19 +1,23 @@
-export interface IHandle {
+import {HandleId, Process} from "../Process";
+import {Thread} from "../Thread";
 
+export interface IHandle {
+    onAdded?(process: Process, id: HandleId): void;
+    onRemoved?(process: Process, id: HandleId): void;
 }
 
 export interface IReadHandle extends IHandle {
-    isEmpty(): boolean;
+    isEmpty(thread?: Thread): boolean;
 
     // Reads
-    read(count: number): string | number[] | null;
-    readLine(): string | null;
-    readAll(): string | number[] | null;
+    read(count: number, thread?: Thread): string | null;
+    readLine(thread?: Thread): string | null;
+    readAll(thread?: Thread): string | null;
 }
 
 export interface IWriteHandle extends IHandle {
-    write(text: string): void;
-    writeLine(text: string): void;
-    flush(): void;
-    close(): void;
+    write(text: string, thread?: Thread): void;
+    writeLine(text: string, thread?: Thread): void;
+    flush(thread?: Thread): void;
+    close(thread?: Thread): void;
 }
