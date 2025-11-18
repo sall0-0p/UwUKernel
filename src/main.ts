@@ -33,7 +33,7 @@ scheduler.syscallExecutor = se;
 const code6 = "stdout.writeLine(os.version())"
 const process6 = pm.createProcess("/", code6);
 
-const code7 = "os.setForegroundProcess() while true do stdin.readLine(); end";
+const code7 = "os.setForegroundProcess() while true do local command = stdin.readLine(); if command == 'raw' then stdout.writeLine(''); stdout.writeLine('Process: Switching to raw input mode! Your yapping rights are revoked.'); os.setRawInputMode(true); end end";
 const process7 = pm.createProcess("/", code7);
 
 scheduler.run();

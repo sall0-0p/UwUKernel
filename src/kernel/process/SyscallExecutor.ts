@@ -14,6 +14,7 @@ export enum Syscall {
 
     // My syscalls
     SetForegroundProcess = "os.setForegroundProcess",
+    SetRawInputMode = "os.setRawInputMode",
 
     // Stdin
     rHandleIsEmpty = "handle.isEmpty",
@@ -64,8 +65,16 @@ export class SyscallExecutor {
             }
 
             // My syscalls
-            case Syscall.SetForegroundProcess:
+            case Syscall.SetForegroundProcess: {
                 this.eventManager.setFocusedProcess(thread.parent);
+                this.scheduler.readyThread(thread, []);
+                break;
+            }
+            case Syscall.SetRawInputMode: {
+                const toggle: boolean = args[0];
+                thread.parent.rawInputMode = toggle;
+                break;
+            }
 
             // File descriptor reading and writing
             case Syscall.rHandleRead: {

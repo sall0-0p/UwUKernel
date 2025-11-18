@@ -23,6 +23,7 @@ export class KeyboardHandle implements IReadHandle, IProcessInterceptor {
     }
 
     onEvent(event: IEvent, scheduler: Scheduler): boolean {
+        if (this.currentProcess && this.currentProcess.rawInputMode) return false;
         let isLineBreak = false;
         let wasRecorded = false;
 
@@ -96,9 +97,10 @@ export class KeyboardHandle implements IReadHandle, IProcessInterceptor {
     }
 
     read(count: number, thread?: Thread): string {
-        if (!thread) {
-            return "";
-        }
+        if (this.currentProcess
+            && this.currentProcess.rawInputMode
+            || !thread
+        ) return "";
 
         let result: string = "";
         if (this.charBuffer.length >= count) {
@@ -113,9 +115,10 @@ export class KeyboardHandle implements IReadHandle, IProcessInterceptor {
     }
 
     readLine(thread: Thread): string {
-        if (!thread) {
-            return "";
-        }
+        if (this.currentProcess
+            && this.currentProcess.rawInputMode
+            || !thread
+        ) return "";
 
         let result: string = "";
         if (this.charBuffer.includes("\n")) {
@@ -136,7 +139,7 @@ export class KeyboardHandle implements IReadHandle, IProcessInterceptor {
     }
 
     close() {
-        
+
     }
 
     // Echoing

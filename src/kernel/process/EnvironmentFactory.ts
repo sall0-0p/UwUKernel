@@ -61,6 +61,15 @@ export namespace EnvironmentFactory {
                  */
                 setForegroundProcess: () => {
                     coroutine.yield("syscall", Syscall.SetForegroundProcess);
+                },
+
+                /**
+                 * Determines if stdin should eat your inputs or not (for terminal).
+                 * @param enabled - if raw input mode should be enabled (system default is false)
+                 */
+                setRawInputMode: (enabled: boolean) => {
+                    // @ts-ignore
+                    coroutine.yield("syscall", Syscall.SetRawInputMode, ____);
                 }
             },
 

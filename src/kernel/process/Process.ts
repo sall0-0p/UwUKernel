@@ -29,6 +29,7 @@ export class Process {
     private handles: Map<HandleId, IHandle> = new Map();
     public environment: object;
     public workingDir: string;
+    public rawInputMode: boolean = false;
 
     private activeInterceptors: IProcessInterceptor[] = [];
 
