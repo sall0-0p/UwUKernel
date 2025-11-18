@@ -29,6 +29,7 @@ export class Scheduler {
 
     public run() {
         while (true) {
+            this.checkWaitingThreads();
             while (this.readyThreads.length > 0) {
                 const thread = this.readyThreads.shift();
                 if (thread) {
@@ -40,7 +41,6 @@ export class Scheduler {
                 }
             }
 
-            this.checkWaitingThreads();
             os.startTimer(1);
             const [...eventData] = os.pullEventRaw();
             if (eventData[0] === "terminate") break;

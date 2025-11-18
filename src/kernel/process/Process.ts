@@ -47,7 +47,7 @@ export class Process {
         this.purgeEvents();
         const encasedEvent: EncasedEvent = {
             event: event,
-            expiryTime: os.epoch() + EVENT_LIFESPAN,
+            expiryTime: os.epoch("utc") + EVENT_LIFESPAN,
             consumedBy: new Map(),
         }
 
