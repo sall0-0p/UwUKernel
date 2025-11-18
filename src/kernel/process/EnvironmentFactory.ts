@@ -55,23 +55,23 @@ export namespace EnvironmentFactory {
 
             stdin: {
                 isEmpty(): boolean {
-                    const [bool] = coroutine.yield("syscall", Syscall.StdinIsEmpty);
+                    const [bool] = coroutine.yield("syscall", Syscall.rHandleIsEmpty, 0);
                     return bool;
                 },
 
                 read(count?: number): string | number[] | null  {
                     // @ts-ignore
-                    const [data] = coroutine.yield("syscall", Syscall.StdinRead, self || 1);
+                    const [data] = coroutine.yield("syscall", Syscall.rHandleRead, 0, self || 1);
                     return data;
                 },
 
                 readLine(): string | null {
-                    const [data] = coroutine.yield("syscall", Syscall.StdinReadLine);
+                    const [data] = coroutine.yield("syscall", Syscall.rHandleReadLine, 0);
                     return data;
                 },
 
                 readAll(): string | number[] | null {
-                    const [data] = coroutine.yield("syscall", Syscall.StdinReadAll);
+                    const [data] = coroutine.yield("syscall", Syscall.rHandleReadAll, 0);
                     return data;
                 }
             },
@@ -79,40 +79,40 @@ export namespace EnvironmentFactory {
             stdout: {
                 write(text: string): void {
                     // @ts-ignore
-                    coroutine.yield("syscall", Syscall.StdoutWrite, self);
+                    coroutine.yield("syscall", Syscall.wHandleWrite, 1, self);
                 },
 
                 writeLine(text: string): void {
                     // @ts-ignore
-                    coroutine.yield("syscall", Syscall.StdoutWriteLine, self);
+                    coroutine.yield("syscall", Syscall.wHandleWriteLine, 1, self);
                 },
 
                 flush(): void {
-                    coroutine.yield("syscall", Syscall.StdoutFlush);
+                    coroutine.yield("syscall", Syscall.wHandleFlush, 1);
                 },
 
                 close(): void {
-                    coroutine.yield("syscall", Syscall.StdoutClose);
+                    coroutine.yield("syscall", Syscall.wHandleClose, 1);
                 },
             },
 
             stderr: {
-                write(): void {
+                write(text: string): void {
                     // @ts-ignore
-                    coroutine.yield("syscall", Syscall.StderrWrite, ____);
+                    coroutine.yield("syscall", Syscall.wHandleWrite, 2, self);
                 },
 
-                writeLine(): void {
+                writeLine(text: string): void {
                     // @ts-ignore
-                    coroutine.yield("syscall", Syscall.StderrWriteLine, ____);
+                    coroutine.yield("syscall", Syscall.wHandleWriteLine, 2, self);
                 },
 
                 flush(): void {
-                    coroutine.yield("syscall", Syscall.StderrFlush);
+                    coroutine.yield("syscall", Syscall.wHandleFlush, 2);
                 },
 
                 close(): void {
-                    coroutine.yield("syscall", Syscall.StderrClose);
+                    coroutine.yield("syscall", Syscall.wHandleClose, 2);
                 },
             },
 

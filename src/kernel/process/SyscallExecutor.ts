@@ -3,7 +3,7 @@ import {Thread} from "./Thread";
 import {EventType} from "./Event";
 import {EventManager} from "./EventManager";
 import {ProcessManager} from "./ProcessManager";
-import {Process} from "./Process";
+import {HandleId, Process} from "./Process";
 import {IReadHandle, IWriteHandle} from "./handle/IHandle";
 
 export enum Syscall {
@@ -12,22 +12,16 @@ export enum Syscall {
     PullEvent = "os.pullEvent",
 
     // Stdin
-    StdinIsEmpty = "stdin.isEmpty",
-    StdinRead = "stdin.read",
-    StdinReadLine = "stdin.readLine",
-    StdinReadAll = "stdin.readAll",
+    rHandleIsEmpty = "handle.isEmpty",
+    rHandleRead = "handle.read",
+    rHandleReadLine = "handle.readLine",
+    rHandleReadAll = "handle.readAll",
 
     // Stdout
-    StdoutWrite = "stdout.write",
-    StdoutWriteLine = "stdout.writeLine",
-    StdoutFlush = "stdout.flush",
-    StdoutClose = "stdout.close",
-
-    // Stderr
-    StderrWrite = "stderr.write",
-    StderrWriteLine = "stderr.writeLine",
-    StderrFlush = "stderr.flush",
-    StderrClose = "stderr.close",
+    wHandleWrite = "handle.write",
+    wHandleWriteLine = "handle.writeLine",
+    wHandleFlush = "handle.flush",
+    wHandleClose = "handle.close",
 }
 
 export class SyscallExecutor {
@@ -45,9 +39,9 @@ export class SyscallExecutor {
      */
     public execute(thread: Thread, syscall: Syscall, args: any[]) {
         const process: Process = thread.parent;
-        const stdin: IReadHandle = process.stdin;
-        const stdout: IWriteHandle = process.stdout;
-        const stderr: IWriteHandle = process.stderr;
+        const stdin: IReadHandle = process.handles.get(0) as IReadHandle;
+        const stdout: IWriteHandle = process.handles.get(1) as IWriteHandle;
+        const stderr: IWriteHandle = process.handles.get(2) as IWriteHandle;
         switch(syscall) {
             // Default syscalls
             case Syscall.Print: {
@@ -65,50 +59,97 @@ export class SyscallExecutor {
                 this.pullEvent(thread, filter, timeout);
                 break;
             }
-            case Syscall.StdinIsEmpty: {
-                const count: number = args[0];
-                const result = stdin.read(count);
-                this.scheduler.readyThread(thread, [result]);
+
+            // File descriptor reading and writing
+            case Syscall.rHandleRead: {
+                const handleId: HandleId = args[0];
+                const count: number = args[1];
+                const handle = process.handles.get(handleId);
+                if (handle && "read" in handle) {
+                    const result: string | number[] = (handle as IReadHandle).read(count);
+                    this.scheduler.readyThread(thread, [result]);
+                } else {
+                    this.scheduler.readyThread(thread, ["Bad file descriptor"]);
+                }
                 break;
             }
-            case Syscall.StdinRead: {
-                const count: number = args[0];
-                const result = stdin.read(count);
-                this.scheduler.readyThread(thread, [result]);
+            case Syscall.rHandleReadLine: {
+                const handleId: HandleId = args[0];
+                const handle = process.handles.get(handleId);
+                if (handle && "readLine" in handle) {
+                    const result: string = (handle as IReadHandle).readLine();
+                    this.scheduler.readyThread(thread, [result]);
+                } else {
+                    this.scheduler.readyThread(thread, ["Bad file descriptor"]);
+                }
                 break;
             }
-            case Syscall.StdinReadAll: {
-                const count: number = args[0];
-                const result = stdin.read(count);
-                this.scheduler.readyThread(thread, [result]);
+            case Syscall.rHandleReadAll: {
+                const handleId: HandleId = args[0];
+                const handle = process.handles.get(handleId);
+                if (handle && "readAll" in handle) {
+                    const result: string | number[] = (handle as IReadHandle).readAll();
+                    this.scheduler.readyThread(thread, [result]);
+                } else {
+                    this.scheduler.readyThread(thread, ["Bad file descriptor"]);
+                }
                 break;
             }
-            case Syscall.StdinReadLine: {
-                const count: number = args[0];
-                const result = stdin.read(count);
-                this.scheduler.readyThread(thread, [result]);
+            case Syscall.rHandleIsEmpty: {
+                const handleId: HandleId = args[0];
+                const handle = process.handles.get(handleId);
+                if (handle && "isEmpty" in handle) {
+                    const result = (handle as IReadHandle).isEmpty();
+                    this.scheduler.readyThread(thread, [result]);
+                } else {
+                    this.scheduler.readyThread(thread, ["Bad file descriptor"]);
+                }
                 break;
             }
-            case Syscall.StdoutWrite: {
-                const text: string = args[0];
-                stdout.write(text);
-                this.scheduler.readyThread(thread, []);
+            case Syscall.wHandleWrite: {
+                const handleId: HandleId = args[0];
+                const text: string = args[1];
+                const handle = process.handles.get(handleId);
+                if (handle && "write" in handle) {
+                    (handle as IWriteHandle).write(text);
+                    this.scheduler.readyThread(thread, []);
+                } else {
+                    this.scheduler.readyThread(thread, ["Bad file descriptor"]);
+                }
                 break;
             }
-            case Syscall.StdoutWriteLine: {
-                const text: string = args[0];
-                stdout.writeLine(text);
-                this.scheduler.readyThread(thread, []);
+            case Syscall.wHandleWriteLine: {
+                const handleId: HandleId = args[0];
+                const text: string = args[1];
+                const handle = process.handles.get(handleId);
+                if (handle && "writeLine" in handle) {
+                    (handle as IWriteHandle).writeLine(text);
+                    this.scheduler.readyThread(thread, []);
+                } else {
+                    this.scheduler.readyThread(thread, ["Bad file descriptor"]);
+                }
                 break;
             }
-            case Syscall.StdoutFlush: {
-                stdout.flush();
-                this.scheduler.readyThread(thread, []);
+            case Syscall.wHandleFlush: {
+                const handleId: HandleId = args[0];
+                const handle = process.handles.get(handleId);
+                if (handle && "flush" in handle) {
+                    (handle as IWriteHandle).flush();
+                    this.scheduler.readyThread(thread, []);
+                } else {
+                    this.scheduler.readyThread(thread, ["Bad file descriptor"]);
+                }
                 break;
             }
-            case Syscall.StdoutClose: {
-                stdout.close();
-                this.scheduler.readyThread(thread, []);
+            case Syscall.wHandleClose: {
+                const handleId: HandleId = args[0];
+                const handle = process.handles.get(handleId);
+                if (handle && "close" in handle) {
+                    (handle as IWriteHandle).close();
+                    this.scheduler.readyThread(thread, []);
+                } else {
+                    this.scheduler.readyThread(thread, ["Bad file descriptor"]);
+                }
                 break;
             }
         }

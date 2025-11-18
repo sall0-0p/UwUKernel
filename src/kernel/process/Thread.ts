@@ -22,7 +22,6 @@ export class Thread {
     public state: ThreadState;
     public nextRunArguments: any[] = [];
     public wakeUpAt: number | null;
-    public lastEventIndex: number = 0;
 
     // Properties when waiting for events.
     public eventFilter: EventType[] | null

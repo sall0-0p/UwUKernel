@@ -12,6 +12,7 @@ export class TerminalHandle implements IWriteHandle {
             term.scroll(1);
         }
         term.write(text);
+        term.setCursorPos(1, y+1);
     }
 
     flush(): void {

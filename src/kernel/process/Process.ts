@@ -16,6 +16,7 @@ interface EncasedEvent {
     consumedBy: Map<TID, boolean>;
 }
 
+export type HandleId = number;
 export type PID = number;
 export class Process {
     public readonly pid: PID = PIDCounter.getNextPID();
@@ -23,29 +24,26 @@ export class Process {
     public readonly threads: Map<TID, Thread> = new Map();
     public readonly eventQueue: EncasedEvent[] = [];
 
-    public stdin: IReadHandle = new KeyboardHandle();
-    public stdout: IWriteHandle = new TerminalHandle();
-    public stderr: IWriteHandle = new TerminalHandle();
-
-    public handles: Map<number, IHandle> = new Map();
-
+    public handles: Map<HandleId, IHandle> = new Map();
     public environment: object;
     public workingDir: string;
 
     public constructor(workingDir: string, parent?: Process) {
         this.workingDir = workingDir;
         this.parent = parent;
-        this.handles.set(0, this.stdin);
-        this.handles.set(1, this.stdout);
-        this.handles.set(2, this.stderr);
+        this.handles.set(0, new KeyboardHandle());
+        this.handles.set(1, new TerminalHandle());
+        this.handles.set(2, new TerminalHandle());
     }
 
     public addThread(thread: Thread) {
         this.threads.set(thread.tid, thread);
     }
 
-    public removeThread(thread: Thread) {
-        this.threads.delete(thread.tid);
+    public addHandle(handle: IHandle): HandleId {
+        const curLen = this.handles.size;
+        this.handles.set(curLen, handle);
+        return curLen;
     }
 
     public queueEvent(event: IEvent, scheduler: Scheduler) {
