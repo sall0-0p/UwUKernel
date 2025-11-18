@@ -35,6 +35,10 @@ export namespace EnvironmentFactory {
                     coroutine.yield("syscall", Syscall.Sleep, ____);
                 },
 
+                version: (): string => {
+                    return "First version for you!";
+                },
+
                 /**
                  * Waits for an event to arrive.
                  * @param filter - filter for events that arrive. Can be either single string (for CraftOS-PC compatability) or array of strings.
@@ -42,10 +46,10 @@ export namespace EnvironmentFactory {
                  * @return event - type of event that was supplied.
                  * @return object - event arguments as a key value pair.
                  */
-                pullEvent: (timeout?: number): [string, object] => {
+                pullEvent: (timeout?: number): object => {
                     // @ts-ignore
-                    const [event, data] = coroutine.yield("syscall", Syscall.PullEvent, ____, timeout || math.huge);
-                    return [event, data];
+                    const [data] = coroutine.yield("syscall", Syscall.PullEvent, ____ || [], timeout || math.huge);
+                    return data;
                 },
             },
 

@@ -1,26 +1,56 @@
 import {Scheduler} from "./Scheduler";
-import {BaseEvent, CharEvent, EventType, KeyEvent, RoutingType, ScreenResizeEvent, TimerEvent} from "./Event";
+import {EventType, IEvent, RoutingType} from "./Event";
+import {ProcessManager} from "./ProcessManager";
+import {PID} from "./Process";
+import {Logger} from "../lib/Logger";
 
 export class EventManager {
-    public constructor(private scheduler: Scheduler) {
+    public constructor(private scheduler: Scheduler, private processManager: ProcessManager) {
     }
 
     public dispatch(rawEventData: any[]) {
         const eventType: EventType = rawEventData[0];
-        let event: BaseEvent | null = null;
+        let event: IEvent | null = null;
 
         switch (eventType) {
             case EventType.Key:
-                event = new KeyEvent(rawEventData[1], rawEventData[2]);
+                // event = new KeyEvent(rawEventData[1], rawEventData[2]);
+                event = {
+                    type: eventType,
+                    routingType: RoutingType.Broadcast,
+                    props: {
+                        key: rawEventData[1],
+                        isHeld: rawEventData[2],
+                    }
+                }
                 break;
             case EventType.Char:
-                event = new CharEvent(rawEventData[1]);
+                event = {
+                    type: eventType,
+                    routingType: RoutingType.Broadcast,
+                    props: {
+                        char: rawEventData[1],
+                    }
+                }
                 break;
             case EventType.ScreenResize:
-                event = new ScreenResizeEvent();
+                const [x, y] = term.getSize();
+                event = {
+                    type: eventType,
+                    routingType: RoutingType.Broadcast,
+                    props: {
+                        x, y
+                    }
+                }
                 break;
             case EventType.Timer:
-                event = new TimerEvent(rawEventData[1]);
+                event = {
+                    type: eventType,
+                    routingType: RoutingType.Broadcast,
+                    props: {
+                        id: rawEventData[1],
+                    }
+                }
                 break;
         }
 
@@ -28,9 +58,21 @@ export class EventManager {
 
         switch (event.routingType) {
             case RoutingType.Broadcast:
-                this.scheduler.broadcastEventToAll(event);
+                this.broadcastEvent(event);
                 break;
         }
     }
 
+    private broadcastEvent(event: IEvent) {
+        const processes = this.processManager.getAllProcesses();
+        processes.forEach((p) => {
+            p.queueEvent(event, this.scheduler);
+        })
+    }
+
+    private sendEventTo(event: IEvent, pid: PID) {
+        const process = this.processManager.getProcessByPID(pid);
+        if (!process) Logger.error("Process not found!");
+        process.queueEvent(event, this.scheduler);
+    }
 }

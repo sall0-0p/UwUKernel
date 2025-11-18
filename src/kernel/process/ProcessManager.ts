@@ -41,4 +41,21 @@ export class ProcessManager {
         this.scheduler.addThread(newThread);
         return newThread;
     }
+
+    /**
+     * Returns all processes existing.
+     */
+    public getAllProcesses(): Process[] {
+        const result: Process[] = [];
+        this.processes.forEach((p) => result.push(p));
+        return result;
+    }
+
+    /**
+     * Returns specific process by pid.
+     * @param pid identifier of the requested process.
+     */
+    public getProcessByPID(pid: PID): Process | null {
+        return this.processes.get(pid);
+    }
 }

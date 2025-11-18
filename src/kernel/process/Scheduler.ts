@@ -1,31 +1,24 @@
 import {Thread, ThreadState, TID, WaitingReason} from "./Thread";
-import {SyscallExecutor} from "./SyscallExecutor";
+import {Syscall, SyscallExecutor} from "./SyscallExecutor";
 import {EventManager} from "./EventManager";
 import {Logger} from "../lib/Logger";
-import {BaseEvent, EventType} from "./Event";
+import {EventType, IEvent} from "./Event";
+import {PID} from "./Process";
+import {ProcessManager} from "./ProcessManager";
 
 // Time in ms, after which preemption should happen.
 const QUANT = 100;
 // How often do we check if preemption should happen (instructions).
 const I_QUANT = 2500;
 
-export enum InterruptionReason {
-    Syscall = "syscall",
-    Preemption = "preemption",
-}
-
 export class Scheduler {
-    private syscallExecutor: SyscallExecutor;
-
     private threads: Map<TID, Thread> = new Map();
     private readyThreads: Thread[] = [];
     private waitingThreads: Thread[] = [];
 
     public eventManager: EventManager;
-
-    public constructor() {
-        this.syscallExecutor = new SyscallExecutor(this);
-    }
+    public processManager: ProcessManager;
+    public syscallExecutor: SyscallExecutor;
 
     public addThread(thread: Thread) {
         this.threads.set(thread.tid, thread);
@@ -35,7 +28,6 @@ export class Scheduler {
     }
 
     public run() {
-        let cycles = 0;
         while (true) {
             while (this.readyThreads.length > 0) {
                 const thread = this.readyThreads.shift();
@@ -48,11 +40,10 @@ export class Scheduler {
                 }
             }
 
-            // Iterate and display cycle count
-            cycles++;
-
             this.checkWaitingThreads();
+            os.startTimer(1);
             const [...eventData] = os.pullEventRaw();
+            if (eventData[0] === "terminate") break;
             this.eventManager.dispatch(eventData);
         }
     }
@@ -82,7 +73,7 @@ export class Scheduler {
         const endTime = os.epoch("utc") + QUANT;
         debug.sethook(thread.thread, () => {
             if (os.epoch("utc") > endTime) {
-                coroutine.yield("interrupt");
+                coroutine.yield("preempt");
             }
         }, "", I_QUANT);
         const [ok, interruptReason, ...result] = coroutine.resume(thread.thread, ...thread.nextRunArguments);
@@ -119,7 +110,9 @@ export class Scheduler {
                     if (thread.waitingTimeout < os.epoch("utc")) {
                         this.readyThreads.push(thread);
                         thread.state = ThreadState.Ready;
-                        thread.nextRunArguments = [null, null];
+                        thread.nextRunArguments = [null];
+                    } else {
+                        newSleeps.push(thread);
                     }
                     break;
             }
@@ -128,7 +121,7 @@ export class Scheduler {
         this.waitingThreads = newSleeps;
     }
 
-    private handleReturns(thread: Thread, interruptReason: InterruptionReason, args: any[]) {
+    private handleReturns(thread: Thread, interruptReason: "syscall" | "preempt", args: any[]) {
         if (interruptReason === "syscall") {
             this.syscallExecutor.execute(thread, args[0], args.slice(1));
         } else {
@@ -145,18 +138,5 @@ export class Scheduler {
         thread.waitingTimeout = os.epoch("utc") + timeout;
         thread.eventFilter = filter;
         this.waitingThreads.push(thread);
-    }
-
-    public broadcastEventToAll(event: BaseEvent) {
-        const newWaitingThreads: Thread[] = [];
-        while (this.waitingThreads.length > 0) {
-            const thread = this.waitingThreads.shift();
-            if (thread.isEventInFilter(event)) {
-                this.readyThread(thread, [event]);
-            } else {
-                newWaitingThreads.push(thread);
-            }
-        }
-        this.waitingThreads = newWaitingThreads;
     }
 }

@@ -1,5 +1,5 @@
 import {Process} from "./Process";
-import {BaseEvent, EventType} from "./Event";
+import {IEvent, EventType} from "./Event";
 
 export enum ThreadState {
     Running = "RUNNING",
@@ -48,7 +48,7 @@ export class Thread {
         this.state = ThreadState.Ready;
     }
 
-    public isEventInFilter(event: BaseEvent) {
+    public isEventInFilter(event: IEvent) {
         if (!this.eventFilter) return false;
         if (this.eventFilter.length === 0) return true;
         return this.eventFilter.includes(event.type);

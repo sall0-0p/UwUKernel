@@ -11,7 +11,9 @@
     },
     "tstl": {
         "luaTarget": "CC-5.2",
-        "luaLibImport": "inline"
+        "luaLibImport": "inline",
+//        "luaBundle": "bundle.lua",
+//        "luaBundleEntry": "./src/main.ts"
     },
     "include": [
         "src/*.ts"

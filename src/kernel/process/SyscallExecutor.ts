@@ -1,6 +1,9 @@
 import {Scheduler} from "./Scheduler";
 import {Thread} from "./Thread";
 import {EventType} from "./Event";
+import {EventManager} from "./EventManager";
+import {ProcessManager} from "./ProcessManager";
+import {Process} from "./Process";
 
 export enum Syscall {
     Print = "print",
@@ -9,7 +12,9 @@ export enum Syscall {
 }
 
 export class SyscallExecutor {
-    public constructor(private scheduler: Scheduler) {
+    public constructor(private scheduler: Scheduler,
+                       private eventManager: EventManager,
+                       private processManager: ProcessManager) {
 
     }
 
@@ -24,9 +29,22 @@ export class SyscallExecutor {
                 break;
             case Syscall.PullEvent:
                 const filter: EventType[] = args[0];
-                const timeout: number = args[1];
-                this.scheduler.waitForEvent(thread, filter, timeout);
+                const timeout: number = args[1] * 1000;
+                // thread.parent.pullNextEventForThread(thread);
+                this.pullEvent(thread, filter, timeout);
                 break;
+        }
+    }
+
+    // Actual syscalls:
+    private pullEvent(thread: Thread, filter: EventType[], timeout: number) {
+        const process: Process = thread.parent;
+        const event = process.pullNextEventForThread(thread);
+        if (event) {
+            // TODO: REPLACE WITH DEEP COPY FOR SECURITY PURPOSES!!!
+            this.scheduler.readyThread(thread, [event]);
+        } else {
+            this.scheduler.waitForEvent(thread, filter, timeout);
         }
     }
 }

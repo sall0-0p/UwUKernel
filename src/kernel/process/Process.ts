@@ -1,15 +1,27 @@
-import {Thread, TID} from "./Thread";
+import {Thread, ThreadState, TID} from "./Thread";
 import {IReadHandle, IWriteHandle} from "./handle/IHandle";
 import {TerminalHandle} from "./handle/TerminalHandle";
-import {BaseEvent} from "./Event";
+import {IEvent} from "./Event";
 import {KeyboardHandle} from "./handle/KeyboardHandle";
+import {Scheduler} from "./Scheduler";
+
+// The maximum size of process event queue.
+const MAX_PROCESS_QUEUE_SIZE = 128;
+// The time events are purged after.
+const EVENT_LIFESPAN = 5000;
+
+interface EncasedEvent {
+    event: IEvent;
+    expiryTime: number;
+    consumedBy: Map<TID, boolean>;
+}
 
 export type PID = number;
 export class Process {
     public readonly pid: PID = PIDCounter.getNextPID();
     public readonly parent: Process | null;
     public readonly threads: Map<TID, Thread> = new Map();
-    public readonly eventQueue: BaseEvent[] = [];
+    public readonly eventQueue: EncasedEvent[] = [];
 
     public stdin: IReadHandle = new KeyboardHandle();
     public stdout: IWriteHandle = new TerminalHandle();
@@ -29,6 +41,52 @@ export class Process {
 
     public removeThread(thread: Thread) {
         this.threads.delete(thread.tid);
+    }
+
+    public queueEvent(event: IEvent, scheduler: Scheduler) {
+        this.purgeEvents();
+        const encasedEvent: EncasedEvent = {
+            event: event,
+            expiryTime: os.epoch() + EVENT_LIFESPAN,
+            consumedBy: new Map(),
+        }
+
+        this.eventQueue.push(encasedEvent);
+        for (const thread of this.threads.values()) {
+            if (thread.state === ThreadState.Waiting && thread.waitingReason === "event") {
+                if (thread.isEventInFilter(event)) {
+                    encasedEvent.consumedBy.set(thread.tid, true);
+                    scheduler.readyThread(thread, [encasedEvent.event]);
+                }
+            }
+        }
+
+        if (this.eventQueue.length > MAX_PROCESS_QUEUE_SIZE) {
+            this.eventQueue.shift();
+        }
+    }
+
+    public pullNextEventForThread(thread: Thread): IEvent | null {
+        this.purgeEvents();
+        for (const encasedEvent of this.eventQueue) {
+            if (thread.isEventInFilter(encasedEvent.event) &&
+                !encasedEvent.consumedBy.has(thread.tid)) {
+                    encasedEvent.consumedBy.set(thread.tid, true);
+                    return encasedEvent.event;
+            }
+        }
+    }
+
+    // Helpers
+    // Stalin said purge.
+    private purgeEvents() {
+        const now = os.epoch("utc");
+        for (let i = this.eventQueue.length -1 ; i >= 0; i--) {
+            const event = this.eventQueue[i];
+            if (event && now > event.expiryTime) {
+                this.eventQueue.splice(i, 1);
+            }
+        }
     }
 }
 

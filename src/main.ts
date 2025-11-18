@@ -2,14 +2,18 @@ import {Scheduler} from "./kernel/process/Scheduler";
 import {ProcessManager} from "./kernel/process/ProcessManager";
 import {EventManager} from "./kernel/process/EventManager";
 import {Logger} from "./kernel/lib/Logger";
+import {SyscallExecutor} from "./kernel/process/SyscallExecutor";
 
 Logger.init();
 Logger.info("Hallo!");
 print("Hallo!");
 const scheduler = new Scheduler();
-const em = new EventManager(scheduler);
 const pm = new ProcessManager(scheduler);
+const em = new EventManager(scheduler, pm);
+const se = new SyscallExecutor(scheduler, em, pm);
 scheduler.eventManager = em;
+scheduler.processManager = pm;
+scheduler.syscallExecutor = se;
 
 // const code1 = "_G.counter = 0; while true do _G.counter = _G.counter + 1 end";
 // const process1 = pm.createProcess("/", code1);
@@ -20,10 +24,16 @@ scheduler.eventManager = em;
 // const code3 = "print('Hallo from third thread, shall die here!');"
 // const thread3 = pm.createThread(code3, process1);
 
-const code4 = "local count = print('Testing line return!'); print(count)";
-const process4 = pm.createProcess("/", code4);
+// const code4 = "local count = print('Testing line return!'); print(count)";
+// const process4 = pm.createProcess("/", code4);
 
 // const code5 = "print('Testing sleep! Zzz Zzz Zzz') sleep(1) print('Woke up!')";
 // const process5 = pm.createProcess("/", code5);
+
+const code6 = "print(os.version())"
+const process6 = pm.createProcess("/", code6);
+
+const code7 = "while true do local data = os.pullEvent({'char'}, 5); if data then print(data.props.char) else print('Expired after 5s') end end";
+const process7 = pm.createProcess("/", code7);
 
 scheduler.run();
