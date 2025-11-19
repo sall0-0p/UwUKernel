@@ -1,11 +1,11 @@
 import {Thread, ThreadState, TID} from "./Thread";
 import {IHandle} from "./handle/IHandle";
 import {TerminalHandle} from "./handle/TerminalHandle";
-import {EventType, IEvent} from "./Event";
+import {EventType, IEvent} from "../event/Event";
 import {KeyboardHandle} from "./handle/KeyboardHandle";
 import {Scheduler} from "./Scheduler";
 import {Logger} from "../lib/Logger";
-import {IProcessInterceptor} from "./interceptor/IProcessInterceptor";
+import {IProcessInterceptor} from "./IProcessInterceptor";
 
 // The maximum size of process event queue.
 const MAX_PROCESS_QUEUE_SIZE = 16;

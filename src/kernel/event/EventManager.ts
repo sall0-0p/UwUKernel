@@ -1,7 +1,7 @@
-import {Scheduler} from "./Scheduler";
+import {Scheduler} from "../process/Scheduler";
 import {EventType, IEvent, RoutingType} from "./Event";
-import {ProcessManager} from "./ProcessManager";
-import {PID, Process} from "./Process";
+import {ProcessManager} from "../process/ProcessManager";
+import {PID, Process} from "../process/Process";
 import {Logger} from "../lib/Logger";
 
 export class EventManager {

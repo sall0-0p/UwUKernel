@@ -1,5 +1,5 @@
 import {Process} from "./Process";
-import {IEvent, EventType} from "./Event";
+import {IEvent, EventType} from "../event/Event";
 import {Logger} from "../lib/Logger";
 
 export enum ThreadState {

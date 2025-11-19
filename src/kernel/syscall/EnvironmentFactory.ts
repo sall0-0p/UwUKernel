@@ -1,5 +1,5 @@
 import {Syscall} from "./SyscallExecutor";
-import {Process} from "./Process";
+import {Process} from "../process/Process";
 
 export namespace EnvironmentFactory {
     export function getEnvironment(process: Process): object {

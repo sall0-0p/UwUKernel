@@ -1,8 +1,8 @@
 import {Thread, ThreadState, TID, WaitingReason} from "./Thread";
-import {SyscallExecutor} from "./SyscallExecutor";
-import {EventManager} from "./EventManager";
+import {SyscallExecutor} from "../syscall/SyscallExecutor";
+import {EventManager} from "../event/EventManager";
 import {Logger} from "../lib/Logger";
-import {EventType, IEvent} from "./Event";
+import {EventType, IEvent} from "../event/Event";
 import {ProcessManager} from "./ProcessManager";
 
 // Time in ms, after which preemption should happen.

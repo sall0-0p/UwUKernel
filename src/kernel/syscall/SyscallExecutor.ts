@@ -1,10 +1,10 @@
-import {Scheduler} from "./Scheduler";
-import {Thread} from "./Thread";
-import {EventType} from "./Event";
-import {EventManager} from "./EventManager";
-import {ProcessManager} from "./ProcessManager";
-import {HandleId, Process} from "./Process";
-import {IReadHandle, IWriteHandle} from "./handle/IHandle";
+import {Scheduler} from "../process/Scheduler";
+import {Thread} from "../process/Thread";
+import {EventType} from "../event/Event";
+import {EventManager} from "../event/EventManager";
+import {ProcessManager} from "../process/ProcessManager";
+import {HandleId, Process} from "../process/Process";
+import {IReadHandle, IWriteHandle} from "../process/handle/IHandle";
 
 export enum Syscall {
     // Default syscalls

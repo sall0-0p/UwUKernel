@@ -1,6 +1,6 @@
 import {PID, Process} from "./Process";
 import {Thread} from "./Thread";
-import {EnvironmentFactory} from "./EnvironmentFactory";
+import {EnvironmentFactory} from "../syscall/EnvironmentFactory";
 import {Scheduler} from "./Scheduler";
 
 export class ProcessManager {

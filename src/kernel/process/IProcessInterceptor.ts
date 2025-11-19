@@ -1,5 +1,5 @@
-import {IEvent} from "../Event";
-import {Scheduler} from "../Scheduler";
+import {IEvent} from "../event/Event";
+import {Scheduler} from "./Scheduler";
 
 /**
  * Interceptor that is added to a process to intercept events before they reach event queue.

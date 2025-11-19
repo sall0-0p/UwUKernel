@@ -1,8 +1,8 @@
 import {IReadHandle} from "./IHandle";
 import {Thread} from "../Thread";
-import {EventType, IEvent} from "../Event";
+import {EventType, IEvent} from "../../event/Event";
 import {HandleId, Process} from "../Process";
-import {IProcessInterceptor} from "../interceptor/IProcessInterceptor";
+import {IProcessInterceptor} from "../IProcessInterceptor";
 import {Scheduler} from "../Scheduler";
 import {TerminalHandle} from "./TerminalHandle";
 

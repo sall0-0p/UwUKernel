@@ -1,8 +1,8 @@
 import {Scheduler} from "./kernel/process/Scheduler";
 import {ProcessManager} from "./kernel/process/ProcessManager";
-import {EventManager} from "./kernel/process/EventManager";
+import {EventManager} from "./kernel/event/EventManager";
 import {Logger} from "./kernel/lib/Logger";
-import {SyscallExecutor} from "./kernel/process/SyscallExecutor";
+import {SyscallExecutor} from "./kernel/syscall/SyscallExecutor";
 
 Logger.init();
 Logger.info("Hallo!");
