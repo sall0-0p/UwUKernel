@@ -14,9 +14,9 @@ const se = new SyscallExecutor(scheduler, em, pm);
 scheduler.eventManager = em;
 scheduler.processManager = pm;
 scheduler.syscallExecutor = se;
-
-const code1 = "print('Running 1!') _G.counter = 0; while true do _G.counter = _G.counter + 1 end";
-const process1 = pm.createProcess("/", code1);
+//
+// const code1 = "print('Running 1!') _G.counter = 0; while true do _G.counter = _G.counter + 1 end";
+// const process1 = pm.createProcess("/", code1);
 // //
 // const code2 = "print('Running 2!') while true do term.setCursorPos(1, 19); term.write(_G.counter); end";
 // const thread2 = pm.createThread(code2, process1);

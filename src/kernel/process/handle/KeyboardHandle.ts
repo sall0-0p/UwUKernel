@@ -12,6 +12,14 @@ export class KeyboardHandle implements IReadHandle, IProcessInterceptor {
     private blockedThread: Thread | null;
     private requiredCount: number | null;
 
+    private returnSuccess(scheduler: Scheduler, thread: Thread, ...results: any[]) {
+        scheduler.readyThread(thread, [true, ...results]);
+    }
+
+    private returnError(scheduler: Scheduler, thread: Thread, message: string) {
+        scheduler.readyThread(thread, [false, message]);
+    }
+
     onAdded(process: Process, id: HandleId) {
         this.currentProcess = process;
         process.registerInterceptor(this);
@@ -64,7 +72,7 @@ export class KeyboardHandle implements IReadHandle, IProcessInterceptor {
             }
 
             // send to the process
-            scheduler.readyThread(this.blockedThread, [result]);
+            this.returnSuccess(scheduler, this.blockedThread, result);
             this.blockedThread = null;
             this.requiredCount = null;
 
@@ -80,8 +88,7 @@ export class KeyboardHandle implements IReadHandle, IProcessInterceptor {
                 result = result + char;
             }
 
-            // send to the process
-            scheduler.readyThread(this.blockedThread, [result]);
+            this.returnSuccess(scheduler, this.blockedThread, result);
             this.blockedThread = null;
 
             // consume event

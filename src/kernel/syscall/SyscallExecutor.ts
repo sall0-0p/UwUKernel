@@ -38,6 +38,16 @@ export class SyscallExecutor {
 
     }
 
+    // Helper to return successful message
+    private returnSuccess(thread: Thread, ...results: any[]) {
+        this.scheduler.readyThread(thread, [true, ...results]);
+    }
+
+    // Helper to return error
+    private returnError(thread: Thread, message: string) {
+        this.scheduler.readyThread(thread, [false, message]);
+    }
+
     /**
      * Executing syscall
      * @param thread - thread for which syscall is executed.
@@ -49,8 +59,8 @@ export class SyscallExecutor {
         switch(syscall) {
             // Default syscalls
             case Syscall.Print: {
-                const arg = print(...args);
-                this.scheduler.readyThread(thread, [arg]);
+                const linesPrinted = print(...args);
+                this.returnSuccess(thread, linesPrinted);
                 break;
             }
             case Syscall.Sleep: {
@@ -67,12 +77,13 @@ export class SyscallExecutor {
             // My syscalls
             case Syscall.SetForegroundProcess: {
                 this.eventManager.setFocusedProcess(thread.parent);
-                this.scheduler.readyThread(thread, []);
+                this.returnSuccess(thread);
                 break;
             }
             case Syscall.SetRawInputMode: {
                 const toggle: boolean = args[0];
                 thread.parent.rawInputMode = toggle;
+                this.returnSuccess(thread);
                 break;
             }
 
@@ -84,10 +95,10 @@ export class SyscallExecutor {
                 if (handle && "read" in handle) {
                     const result: string | number[] = (handle as IReadHandle).read(count, thread);
                     if (result) {
-                        this.scheduler.readyThread(thread, [result]);
+                        this.returnSuccess(thread, result);
                     }
                 } else {
-                    this.scheduler.readyThread(thread, ["Bad file descriptor"]);
+                    this.returnError(thread, "invalid argument #0: bad file descriptor");
                 }
                 break;
             }
@@ -97,10 +108,10 @@ export class SyscallExecutor {
                 if (handle && "readLine" in handle) {
                     const result: string = (handle as IReadHandle).readLine(thread);
                     if (result) {
-                        this.scheduler.readyThread(thread, [result]);
+                        this.returnSuccess(thread, result);
                     }
                 } else {
-                    this.scheduler.readyThread(thread, ["Bad file descriptor"]);
+                    this.returnError(thread, "invalid argument #0: bad file descriptor");
                 }
                 break;
             }
@@ -110,10 +121,10 @@ export class SyscallExecutor {
                 if (handle && "readAll" in handle) {
                     const result: string | number[] = (handle as IReadHandle).readAll(thread);
                     if (result) {
-                        this.scheduler.readyThread(thread, [result]);
+                        this.returnSuccess(thread, result);
                     }
                 } else {
-                    this.scheduler.readyThread(thread, ["Bad file descriptor"]);
+                    this.returnError(thread, "invalid argument #0: bad file descriptor");
                 }
                 break;
             }
@@ -122,9 +133,9 @@ export class SyscallExecutor {
                 const handle = process.getHandle(handleId);
                 if (handle && "isEmpty" in handle) {
                     const result = (handle as IReadHandle).isEmpty(thread);
-                    this.scheduler.readyThread(thread, [result]);
+                    this.returnSuccess(thread, result);
                 } else {
-                    this.scheduler.readyThread(thread, ["Bad file descriptor"]);
+                    this.returnError(thread, "invalid argument #0: bad file descriptor");
                 }
                 break;
             }
@@ -134,9 +145,9 @@ export class SyscallExecutor {
                 const handle = process.getHandle(handleId);
                 if (handle && "write" in handle) {
                     (handle as IWriteHandle).write(text, thread);
-                    this.scheduler.readyThread(thread, []);
+                    this.returnSuccess(thread);
                 } else {
-                    this.scheduler.readyThread(thread, ["Bad file descriptor"]);
+                    this.returnError(thread, "invalid argument #0: bad file descriptor");
                 }
                 break;
             }
@@ -146,9 +157,9 @@ export class SyscallExecutor {
                 const handle = process.getHandle(handleId);
                 if (handle && "writeLine" in handle) {
                     (handle as IWriteHandle).writeLine(text, thread);
-                    this.scheduler.readyThread(thread, []);
+                    this.returnSuccess(thread);
                 } else {
-                    this.scheduler.readyThread(thread, ["Bad file descriptor"]);
+                    this.returnError(thread, "invalid argument #0: bad file descriptor");
                 }
                 break;
             }
@@ -157,9 +168,9 @@ export class SyscallExecutor {
                 const handle = process.getHandle(handleId);
                 if (handle && "flush" in handle) {
                     (handle as IWriteHandle).flush(thread);
-                    this.scheduler.readyThread(thread, []);
+                    this.returnSuccess(thread);
                 } else {
-                    this.scheduler.readyThread(thread, ["Bad file descriptor"]);
+                    this.returnError(thread, "invalid argument #0: bad file descriptor");
                 }
                 break;
             }
@@ -168,9 +179,9 @@ export class SyscallExecutor {
                 const handle = process.getHandle(handleId);
                 if (handle && "close" in handle) {
                     (handle as IWriteHandle).close(thread);
-                    this.scheduler.readyThread(thread, []);
+                    this.returnSuccess(thread);
                 } else {
-                    this.scheduler.readyThread(thread, ["Bad file descriptor"]);
+                    this.returnError(thread, "invalid argument #0: bad file descriptor");
                 }
                 thread.parent.removeHandle(handleId);
                 break;
