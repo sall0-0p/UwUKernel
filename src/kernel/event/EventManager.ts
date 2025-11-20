@@ -9,8 +9,8 @@ export class EventManager {
     }
 
     // Focused process designation;
-    private focusedProcess: Process;
-    public getFocusedProcess() {
+    private focusedProcess: Process | undefined;
+    public getFocusedProcess(): Process | undefined {
         return this.focusedProcess;
     }
 
@@ -85,7 +85,10 @@ export class EventManager {
 
     private sendEventTo(event: IEvent, pid: PID) {
         const process = this.processManager.getProcessByPID(pid);
-        if (!process) Logger.error("Process not found!");
+        if (process === undefined) {
+            Logger.error("Process not found!")
+            return;
+        }
         process.queueEvent(event);
     }
 }

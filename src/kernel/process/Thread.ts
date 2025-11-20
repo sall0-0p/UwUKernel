@@ -30,12 +30,12 @@ export class Thread {
     private priority: ThreadPriority = ThreadPriority.VeryHigh;
     public state: ThreadState;
     public nextRunArguments: any[] = [];
-    public wakeUpAt: number | null;
+    public wakeUpAt: number | undefined;
 
     // Properties when waiting for events.
-    public eventFilter: EventType[] | null
-    public waitingReason: WaitingReason | null;
-    public waitingTimeout: number | null;
+    public eventFilter: EventType[] | undefined;
+    public waitingReason: WaitingReason | undefined;
+    public waitingTimeout: number | undefined;
 
     /**
      * Creates new thread object.
@@ -54,7 +54,7 @@ export class Thread {
             return;
         }
 
-        setfenv(executable, parent.environment);
+        setfenv(executable, parent.environment || {});
         this.thread = coroutine.create(executable);
         this.state = ThreadState.Ready;
     }

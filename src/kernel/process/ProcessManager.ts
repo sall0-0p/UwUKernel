@@ -55,7 +55,7 @@ export class ProcessManager {
      * Returns specific process by pid.
      * @param pid identifier of the requested process.
      */
-    public getProcessByPID(pid: PID): Process | null {
+    public getProcessByPID(pid: PID): Process | undefined {
         return this.processes.get(pid);
     }
 }

@@ -17,11 +17,11 @@ export class ReadyQueue {
         queue.push(thread);
     }
 
-    public shift(): Thread | null {
+    public shift(): Thread | undefined {
         let queueIndex = 0;
-        let thread : Thread | null;
+        let thread : Thread | undefined;
         while (queueIndex < 5 && !thread) {
-            thread = this.queues.get(queueIndex).pop();
+            thread = this.queues.get(queueIndex)!.pop();
             queueIndex++;
         }
         return thread;

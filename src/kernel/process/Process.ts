@@ -22,12 +22,12 @@ export type HandleId = number;
 export type PID = number;
 export class Process {
     public readonly pid: PID = PIDCounter.getNextPID();
-    public readonly parent: Process | null;
+    public readonly parent: Process | undefined;
     public readonly threads: Map<TID, Thread> = new Map();
     public readonly eventQueue: EncasedEvent[] = [];
 
     private handles: Map<HandleId, IHandle> = new Map();
-    public environment: object;
+    public environment: object | undefined;
     public workingDir: string;
     public rawInputMode: boolean = false;
 
@@ -35,7 +35,7 @@ export class Process {
 
     public constructor(private scheduler: Scheduler, workingDir: string, parent?: Process) {
         this.workingDir = workingDir;
-        this.parent = parent;
+        this.parent = parent || undefined;
         this.setHandle(new KeyboardHandle(), 0);
         this.setHandle(new TerminalHandle(), 1);
         this.setHandle(new TerminalHandle(), 2);
@@ -52,7 +52,7 @@ export class Process {
         return curLen;
     }
 
-    public getHandle(handleId: HandleId): IHandle | null {
+    public getHandle(handleId: HandleId): IHandle | undefined {
         return this.handles.get(handleId);
     }
 
@@ -67,18 +67,20 @@ export class Process {
             return false;
         }
 
-        if (this.handles.get(handleId)) {
-            this.handles.get(handleId)
+        const oldHandle = this.handles.get(handleId);
+        if (oldHandle) {
+            oldHandle
                 .onRemoved?.(this, handleId);
         }
 
         handle.onAdded?.(this, handleId);
         this.handles.set(handleId, handle);
+        return true;
     }
 
     public removeHandle(handleId: HandleId): void {
-        this.handles.get(handleId).onRemoved?.(this, handleId);
-        this.handles.set(handleId, null);
+        this.handles.get(handleId)?.onRemoved?.(this, handleId);
+        this.handles.delete(handleId);
     }
 
     public queueEvent(event: IEvent) {
@@ -131,7 +133,7 @@ export class Process {
         }
     }
 
-    public pullNextEventForThread(thread: Thread): IEvent | null {
+    public pullNextEventForThread(thread: Thread): IEvent | undefined {
         this.purgeEvents();
         for (const encasedEvent of this.eventQueue) {
             if (thread.isEventInFilter(encasedEvent.event) &&

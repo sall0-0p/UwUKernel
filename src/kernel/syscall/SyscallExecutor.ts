@@ -93,7 +93,7 @@ export class SyscallExecutor {
                 const count: number = args[1];
                 const handle = process.getHandle(handleId);
                 if (handle && "read" in handle) {
-                    const result: string | number[] = (handle as IReadHandle).read(count, thread);
+                    const result: string | null = (handle as IReadHandle).read(count, thread);
                     if (result) {
                         this.returnSuccess(thread, result);
                     }
@@ -106,7 +106,7 @@ export class SyscallExecutor {
                 const handleId: HandleId = args[0];
                 const handle = process.getHandle(handleId);
                 if (handle && "readLine" in handle) {
-                    const result: string = (handle as IReadHandle).readLine(thread);
+                    const result: string | null = (handle as IReadHandle).readLine(thread);
                     if (result) {
                         this.returnSuccess(thread, result);
                     }
@@ -119,7 +119,7 @@ export class SyscallExecutor {
                 const handleId: HandleId = args[0];
                 const handle = process.getHandle(handleId);
                 if (handle && "readAll" in handle) {
-                    const result: string | number[] = (handle as IReadHandle).readAll(thread);
+                    const result: string | null = (handle as IReadHandle).readAll(thread);
                     if (result) {
                         this.returnSuccess(thread, result);
                     }

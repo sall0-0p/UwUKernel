@@ -26,10 +26,10 @@ export class TerminalHandle implements IWriteHandle {
     }
 
     flush(): void {
-        return null;
+        return;
     }
 
     close(): void {
-        return null;
+        return;
     }
 }

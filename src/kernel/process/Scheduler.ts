@@ -16,9 +16,9 @@ export class Scheduler {
     private readyThreads: ReadyQueue = new ReadyQueue();
     private waitingThreads: Thread[] = [];
 
-    public eventManager: EventManager;
-    public processManager: ProcessManager;
-    public syscallExecutor: SyscallExecutor;
+    public eventManager!: EventManager;
+    public processManager!: ProcessManager;
+    public syscallExecutor!: SyscallExecutor;
 
     public addThread(thread: Thread) {
         this.threads.set(thread.tid, thread);
@@ -58,10 +58,10 @@ export class Scheduler {
     }
 
     public readyThread(thread: Thread, args?: any[]) {
-        thread.waitingReason = null;
-        thread.waitingTimeout = null;
-        thread.eventFilter = null;
-        thread.wakeUpAt = null;
+        thread.waitingReason = undefined;
+        thread.waitingTimeout = undefined;
+        thread.eventFilter = undefined;
+        thread.wakeUpAt = undefined;
         thread.nextRunArguments = args || [];
 
         thread.state = ThreadState.Ready;
@@ -107,10 +107,10 @@ export class Scheduler {
     private checkWaitingThreads() {
         const newSleeps: Thread[] = [];
         while (this.waitingThreads.length > 0) {
-            const thread = this.waitingThreads.pop();
+            const thread = this.waitingThreads.pop()!;
             switch (thread.waitingReason) {
                 case WaitingReason.Sleep:
-                    if (thread.wakeUpAt < os.epoch("utc")) {
+                    if (thread.wakeUpAt! < os.epoch("utc")) {
                         this.readyThreads.push(thread);
                         thread.state = ThreadState.Ready;
                     } else {
@@ -118,7 +118,7 @@ export class Scheduler {
                     }
                     break;
                 case WaitingReason.Event:
-                    if (thread.waitingTimeout < os.epoch("utc")) {
+                    if (thread.waitingTimeout! < os.epoch("utc")) {
                         this.readyThreads.push(thread);
                         thread.state = ThreadState.Ready;
                         thread.nextRunArguments = [null];

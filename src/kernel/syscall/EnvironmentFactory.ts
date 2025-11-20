@@ -16,7 +16,7 @@ export namespace EnvironmentFactory {
              * Prints to the screen.
              * @param str strings to be printed to the screen.
              */
-            print: (...str): number => {
+            print: (...str: string[]): number => {
                 // @ts-ignore There is tendency of compile to insert first argument as ____, which leads to first argument being eaten up by whatever is called. It means that all methods should be threated as with unexisting first argument ____, that is ts-ignored previously.
                 const [result] = sys(Syscall.Print, ...str);
                 return result;

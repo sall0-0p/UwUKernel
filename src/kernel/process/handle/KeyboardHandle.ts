@@ -8,9 +8,9 @@ import {TerminalHandle} from "./TerminalHandle";
 
 export class KeyboardHandle implements IReadHandle, IProcessInterceptor {
     private charBuffer: string[] = [];
-    private currentProcess: Process | null;
-    private blockedThread: Thread | null;
-    private requiredCount: number | null;
+    private currentProcess: Process | undefined;
+    private blockedThread: Thread | undefined;
+    private requiredCount: number | undefined;
 
     private returnSuccess(scheduler: Scheduler, thread: Thread, ...results: any[]) {
         scheduler.readyThread(thread, [true, ...results]);
@@ -27,7 +27,7 @@ export class KeyboardHandle implements IReadHandle, IProcessInterceptor {
 
     onRemoved(process: Process, id: HandleId) {
         process.deregisterInterceptor(this);
-        this.currentProcess = null;
+        this.currentProcess = undefined;
     }
 
     onEvent(event: IEvent, scheduler: Scheduler): boolean {
@@ -73,8 +73,8 @@ export class KeyboardHandle implements IReadHandle, IProcessInterceptor {
 
             // send to the process
             this.returnSuccess(scheduler, this.blockedThread, result);
-            this.blockedThread = null;
-            this.requiredCount = null;
+            this.blockedThread = undefined;
+            this.requiredCount = undefined;
 
             // consume event
             return true;
@@ -89,7 +89,7 @@ export class KeyboardHandle implements IReadHandle, IProcessInterceptor {
             }
 
             this.returnSuccess(scheduler, this.blockedThread, result);
-            this.blockedThread = null;
+            this.blockedThread = undefined;
 
             // consume event
             return true;
@@ -103,7 +103,7 @@ export class KeyboardHandle implements IReadHandle, IProcessInterceptor {
         return true;
     }
 
-    read(count: number, thread?: Thread): string {
+    read(count: number, thread?: Thread): string | null {
         if (this.currentProcess
             && this.currentProcess.rawInputMode
             || !thread
@@ -121,7 +121,7 @@ export class KeyboardHandle implements IReadHandle, IProcessInterceptor {
         }
     }
 
-    readLine(thread: Thread): string {
+    readLine(thread: Thread): string | null {
         if (this.currentProcess
             && this.currentProcess.rawInputMode
             || !thread
@@ -151,7 +151,7 @@ export class KeyboardHandle implements IReadHandle, IProcessInterceptor {
 
     // Echoing
     private echo(event: IEvent) {
-        const stdout = this.currentProcess.getHandle(1);
+        const stdout = this.currentProcess?.getHandle(1);
         if (stdout && stdout instanceof TerminalHandle) {
             if (event.type === EventType.Char) {
                 stdout.write(event.props.char);

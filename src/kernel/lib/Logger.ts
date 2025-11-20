@@ -47,7 +47,7 @@ function log(type: string, message: string | null | undefined, ...args: any[]): 
 
     const timestamp = os.date("%T");
     const debugInfo = debug.getinfo(3);
-    let prefix = `[${timestamp}] ${debugInfo.short_src}:${debugInfo.currentline} `;
+    let prefix = `[${timestamp}] ${debugInfo?.short_src}:${debugInfo?.currentline} `;
     const content = string.format("[%s] " + (message || "nil"), type, ...args);
 
     prefix = prefix.padEnd(MESSAGE_INDENT, " ");
