@@ -33,17 +33,29 @@ export class Process {
 
     private activeInterceptors: IProcessInterceptor[] = [];
 
-    public constructor(private scheduler: Scheduler, workingDir: string, parent?: Process) {
+    public constructor(private scheduler: Scheduler, workingDir: string, parent?: Process, handleOverrides?: Map<number, IHandle>) {
         this.workingDir = workingDir;
         this.parent = parent || undefined;
+
+        // Attach appropriate handles;
         if (this.parent) {
-            this.setHandle(this.parent.getHandle(0)!, 0);
-            this.setHandle(this.parent.getHandle(1)!, 1);
-            this.setHandle(this.parent.getHandle(2)!, 2);
-        } else {
-            this.setHandle(new KeyboardHandle(), 0);
-            this.setHandle(new TerminalHandle(), 1);
-            this.setHandle(new TerminalHandle(), 2);
+            const pStdin = this.parent.getHandle(0);
+            const pStdout = this.parent.getHandle(1);
+            const pStderr = this.parent.getHandle(2);
+
+            if (pStdin) this.setHandle(pStdin, 0);
+            if (pStdout) this.setHandle(pStdout, 1);
+            if (pStderr) this.setHandle(pStderr, 2);
+        }
+
+        handleOverrides?.forEach((h, id) => {
+            this.setHandle(h, id);
+        })
+
+        if (!this.parent) {
+            if (!this.getHandle(0)) this.setHandle(new KeyboardHandle(), 0);
+            if (!this.getHandle(1)) this.setHandle(new TerminalHandle(), 1);
+            if (!this.getHandle(2)) this.setHandle(new TerminalHandle(), 2);
         }
     }
 
