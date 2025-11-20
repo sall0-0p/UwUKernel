@@ -36,9 +36,15 @@ export class Process {
     public constructor(private scheduler: Scheduler, workingDir: string, parent?: Process) {
         this.workingDir = workingDir;
         this.parent = parent || undefined;
-        this.setHandle(new KeyboardHandle(), 0);
-        this.setHandle(new TerminalHandle(), 1);
-        this.setHandle(new TerminalHandle(), 2);
+        if (this.parent) {
+            this.setHandle(this.parent.getHandle(0)!, 0);
+            this.setHandle(this.parent.getHandle(1)!, 1);
+            this.setHandle(this.parent.getHandle(2)!, 2);
+        } else {
+            this.setHandle(new KeyboardHandle(), 0);
+            this.setHandle(new TerminalHandle(), 1);
+            this.setHandle(new TerminalHandle(), 2);
+        }
     }
 
     public addThread(thread: Thread) {
