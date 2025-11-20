@@ -4,15 +4,16 @@ import {EventManager} from "../event/EventManager";
 import {Logger} from "../lib/Logger";
 import {EventType, IEvent} from "../event/Event";
 import {ProcessManager} from "./ProcessManager";
+import {ReadyQueue} from "./ReadyQueue";
 
 // Time in ms, after which preemption should happen.
-const QUANT = 100;
+const BASE_QUANT = 20;
 // How often do we check if preemption should happen (instructions).
 const I_QUANT = 2500;
 
 export class Scheduler {
     private threads: Map<TID, Thread> = new Map();
-    private readyThreads: Thread[] = [];
+    private readyThreads: ReadyQueue = new ReadyQueue();
     private waitingThreads: Thread[] = [];
 
     public eventManager: EventManager;
@@ -31,7 +32,7 @@ export class Scheduler {
 
         while (true) {
             this.checkWaitingThreads();
-            const cycleThreads = [...this.readyThreads];
+            const cycleThreads = this.readyThreads.toArray();
             while (cycleThreads.length > 0) {
                 const thread = cycleThreads.shift();
                 this.readyThreads.shift();
@@ -78,7 +79,9 @@ export class Scheduler {
 
     // Helpers
     private executeThread(thread: Thread) {
-        const endTime = os.epoch("utc") + QUANT;
+        const endTime = os.epoch("utc")
+            // Add quant multiplied by priority, lowest priority gets 10ms, highest gets 50ms.
+            + BASE_QUANT;
         debug.sethook(thread.thread, () => {
             if (os.epoch("utc") > endTime) {
                 coroutine.yield("preempt");
@@ -131,9 +134,13 @@ export class Scheduler {
 
     private handleReturns(thread: Thread, interruptReason: "syscall" | "preempt", args: any[]) {
         if (interruptReason === "syscall") {
+            // Reward thread for being a good boy.
+            thread.setPriority(thread.getPriority() - 1);
             this.syscallExecutor.execute(thread, args[0], args.slice(1));
         } else {
-            // Apply some preemption priorities logic later or whatever.
+            // Move thread up one priority for being nasty CPU eater.
+            thread.setPriority(thread.getPriority() + 1);
+
             thread.state = ThreadState.Ready;
             this.readyThreads.push(thread);
         }

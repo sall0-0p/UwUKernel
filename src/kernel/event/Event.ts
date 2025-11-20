@@ -2,7 +2,7 @@ export enum EventType {
     Key = "key",
     KeyUp = "key_up",
     Char = "char",
-    ScreenResize = "term_resize",
+    ScreenResize = "screen_resize",
     Timer = "timer",
 }
 

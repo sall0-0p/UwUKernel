@@ -145,6 +145,7 @@ export namespace EnvironmentFactory {
             },
 
             term: term,
+            keys: keys,
         }
     }
 }

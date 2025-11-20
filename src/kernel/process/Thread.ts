@@ -14,11 +14,20 @@ export enum WaitingReason {
     Event = "event",
 }
 
+export enum ThreadPriority {
+    VeryHigh = 0,
+    High = 1,
+    Normal = 2,
+    Low = 3,
+    VeryLow = 4,
+}
+
 export type TID = number;
 export class Thread {
     public readonly tid: TID = TIDCounter.getNextTID();
     public readonly thread: LuaThread;
     public readonly parent: Process;
+    private priority: ThreadPriority = ThreadPriority.VeryHigh;
     public state: ThreadState;
     public nextRunArguments: any[] = [];
     public wakeUpAt: number | null;
@@ -54,6 +63,15 @@ export class Thread {
         if (!this.eventFilter) return false;
         if (this.eventFilter.length === 0) return true;
         return this.eventFilter.includes(event.type);
+    }
+
+    public getPriority() {
+        return this.priority;
+    }
+
+    public setPriority(priority: ThreadPriority) {
+        const limitedPriority = math.max(0, math.min(priority, 4));
+        this.priority = limitedPriority;
     }
 }
 
