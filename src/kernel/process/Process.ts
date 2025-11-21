@@ -130,12 +130,6 @@ export class Process {
             }
         }
 
-        if (event.type === EventType.Char || event.type === EventType.Key) {
-            if (typeof this.handles.get(0)) {
-
-            }
-        }
-
         if (this.eventQueue.length > MAX_PROCESS_QUEUE_SIZE) {
             this.eventQueue.shift();
         }
