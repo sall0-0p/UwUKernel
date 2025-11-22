@@ -5,31 +5,7 @@ import {EventManager} from "../event/EventManager";
 import {ProcessManager} from "../process/ProcessManager";
 import {HandleId, Process} from "../process/Process";
 import {IReadHandle, IWriteHandle} from "../process/handle/IHandle";
-
-export enum Syscall {
-    // Default syscalls
-    Print = "print",
-    Sleep = "os.sleep",
-    PullEvent = "os.pullEvent",
-
-    // My syscalls
-    SetForegroundProcess = "os.setForegroundProcess",
-    SetRawInputMode = "os.setRawInputMode",
-
-    // Stdin
-    rHandleIsEmpty = "handle.isEmpty",
-    rHandleRead = "handle.read",
-    rHandleReadLine = "handle.readLine",
-    rHandleReadAll = "handle.readAll",
-
-    // Stdout
-    wHandleWrite = "handle.write",
-    wHandleWriteLine = "handle.writeLine",
-    wHandleFlush = "handle.flush",
-
-    // Any
-    aHandleClose = "handle.close",
-}
+import {Syscall} from "./Syscall";
 
 export class SyscallExecutor {
     public constructor(private scheduler: Scheduler,
@@ -56,6 +32,7 @@ export class SyscallExecutor {
      */
     public execute(thread: Thread, syscall: Syscall, args: any[]) {
         const process: Process = thread.parent;
+        const startedTime = os.epoch("utc");
         switch(syscall) {
             // Default syscalls
             case Syscall.Print: {
@@ -73,13 +50,34 @@ export class SyscallExecutor {
                 thread.parent.pullEvent(thread, filter, timeout);
                 break;
             }
+            case Syscall.Epoch: {
+                const mode: string = args[0];
+                if (mode !== "utc" && mode !== "ingame" && mode !== "local") {
+                    this.returnError(thread, "Invalid mode " + mode);
+                    break;
+                }
+
+                this.returnSuccess(thread, os.epoch(mode));
+                break;
+            }
 
             // My syscalls
+            case Syscall.GetPid: {
+                this.returnSuccess(thread, thread.parent.pid);
+                break;
+            }
+
+            case Syscall.GetProcessTime: {
+                this.returnSuccess(thread, thread.parent.cpuTime, thread.parent.sysTime);
+                break;
+            }
+
             case Syscall.SetForegroundProcess: {
                 this.eventManager.setFocusedProcess(thread.parent);
                 this.returnSuccess(thread);
                 break;
             }
+
             case Syscall.SetRawInputMode: {
                 const toggle: boolean = args[0];
                 thread.parent.rawInputMode = toggle;
@@ -187,5 +185,8 @@ export class SyscallExecutor {
                 break;
             }
         }
+        const finishedTime = os.epoch("utc");
+        const syscallTime = finishedTime - startedTime;
+        thread.parent.sysTime += syscallTime;
     }
 }

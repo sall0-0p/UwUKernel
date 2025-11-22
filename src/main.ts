@@ -29,11 +29,39 @@ scheduler.syscallExecutor = se;
 
 // const code5 = "print('Testing sleep! Zzz Zzz Zzz') sleep(1) print('Woke up!')";
 // const process5 = pm.createProcess("/", code5);
+//
+// const code6 =
+//     "stdout.writeLine('Version: ' .. os.version()); " +
+//     "stdout.writeLine('PID: ' .. os.getPid());" +
+//     "local processTime = os.getProcessTime();" +
+//     "stdout.writeLine('CPU time: ' .. processTime.cpuTime);" +
+//     "stdout.writeLine('SYS time: ' .. processTime.sysTime);" +
+//     "stdout.writeLine('epoch: ' .. os.epoch('utc'));";
+// const process6 = pm.createProcess("/", code6);
+//
+// const code7 = "os.setForegroundProcess() while true do local command = stdin.readLine(); if command == 'raw' then stdout.writeLine(''); stdout.writeLine('Process: Switching to raw input mode! Your yapping rights are revoked.'); os.setRawInputMode(true); end end";
+// const process7 = pm.createProcess("/", code7);
 
-const code6 = "stdout.writeLine(os.version())"
-const process6 = pm.createProcess("/", code6);
+const code8 =
+    "print('Starting Pi calculation...'); " +
+    "local iterations = 2000000; " +
+    "local pi = 0; " +
+    "local start = os.epoch('utc'); " +
+    "for i = 0, iterations do " +
+    "    local term = 4 * ((-1)^i) / (2*i + 1); " +
+    "    pi = pi + term; " +
+    "    if i % 250000 == 0 then " +
+    "       print('Syscall at ' .. i .. ' instructions'); " + // This print adds to SYS time
+    "    end " +
+    "end " +
+    "print('Calculation finished.'); " +
+    "print('Pi ~= ' .. pi); " +
+    "local t = os.getProcessTime(); " +
+    "print('------------------'); " +
+    "print('CPU (User): ' .. t.cpuTime .. 'ms'); " +
+    "print('SYS (Kern): ' .. t.sysTime .. 'ms'); " +
+    "print('Total Real: ' .. (os.epoch('utc') - start) / 1000); ";
 
-const code7 = "os.setForegroundProcess() while true do local command = stdin.readLine(); if command == 'raw' then stdout.writeLine(''); stdout.writeLine('Process: Switching to raw input mode! Your yapping rights are revoked.'); os.setRawInputMode(true); end end";
-const process7 = pm.createProcess("/", code7);
+const process8 = pm.createProcess("/", code8);
 
 scheduler.run();

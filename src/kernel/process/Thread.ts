@@ -22,11 +22,22 @@ export enum ThreadPriority {
     VeryLow = 4,
 }
 
+export enum ThreadExitStatus {
+    Finished = 0,
+    Errored = 1,
+}
+
 export type TID = number;
 export class Thread {
     public readonly tid: TID = TIDCounter.getNextTID();
     public readonly thread: LuaThread;
     public readonly parent: Process;
+
+    // Error handling
+    public exitStatus: ThreadExitStatus | number | undefined;
+    public exitReason: string | undefined;
+
+    // State (scheduling)
     private priority: ThreadPriority = ThreadPriority.VeryHigh;
     public state: ThreadState;
     public nextRunArguments: any[] = [];

@@ -1,5 +1,6 @@
-import {Syscall} from "./SyscallExecutor";
 import {Process} from "../process/Process";
+import {Syscall} from "./Syscall";
+import {IEvent} from "../event/Event";
 
 export namespace EnvironmentFactory {
     function sys(id: Syscall, ...args: any[]): any[] {
@@ -16,9 +17,9 @@ export namespace EnvironmentFactory {
              * Prints to the screen.
              * @param str strings to be printed to the screen.
              */
-            print: (...str: string[]): number => {
+            print(...str: string[]): number {
                 // @ts-ignore There is tendency of compile to insert first argument as ____, which leads to first argument being eaten up by whatever is called. It means that all methods should be threated as with unexisting first argument ____, that is ts-ignored previously.
-                const [result] = sys(Syscall.Print, ...str);
+                const [result] = sys(Syscall.Print, self, ...str);
                 return result;
             },
 
@@ -26,9 +27,9 @@ export namespace EnvironmentFactory {
              * Yields for certain amount of time. After yielding ends, is moved to ready queue.
              * @param time amount in seconds to yield for.
              */
-            sleep: (time: number): void => {
+            sleep(time: number): void {
                 // @ts-ignore
-                sys(Syscall.Sleep, ____);
+                sys(Syscall.Sleep, self);
             },
 
             os: {
@@ -38,16 +39,16 @@ export namespace EnvironmentFactory {
                  * Alias of `_G.sleep(time)`;
                  * @param time amount of time in seconds to yield for.
                  */
-                sleep: (time: number): void => {
+                sleep(time: number): void {
                     // @ts-ignore
-                    sys(Syscall.Sleep, ____);
+                    sys(Syscall.Sleep, self);
                 },
 
                 /**
                  * Returns os version as a string;
                  */
-                version: (): string => {
-                    return "First version for you!";
+                version(): string {
+                    return "UwUntuCC v0.1";
                 },
 
                 /**
@@ -57,17 +58,55 @@ export namespace EnvironmentFactory {
                  * @return event - type of event that was supplied.
                  * @return object - event arguments as a key value pair.
                  */
-                pullEvent: (timeout?: number): object => {
+                pullEvent(timeout?: number): IEvent {
                     // @ts-ignore
-                    const [data] = sys(Syscall.PullEvent, ____ || [], timeout || math.huge);
+                    const [data] = sys(Syscall.PullEvent, self || [], timeout || math.huge);
                     return data;
+                },
+
+                /**
+                 * Returns time in milliseconds depending on mode (defaults `ingame`).
+                 *
+                 * If called with `ingame`, returns the number of in-game milliseconds since the world was created. This is the default.
+                 *
+                 * If called with `utc`, returns the number of milliseconds since 1 January 1970 in the UTC timezone.
+                 *
+                 * If called with `local`, returns the number of milliseconds since 1 January 1970 in the server's local timezone.
+                 *
+                 * (Identical to default ComputerCraft behaviour).
+                 * @param type - locale to get epoch for
+                 * @returns number in milliseconds since the epoch depending on selected locale.
+                 */
+                epoch(type: "ingame" | "utc" | "local"): number {
+                    // @ts-ignore
+                    const [epoch] = sys(Syscall.Epoch, self);
+                    return epoch;
+                },
+
+                /**
+                 * Returns PID of process the thread belongs.
+                 */
+                getPid(): number {
+                    const [time] = sys(Syscall.GetPid);
+                    return time;
+                },
+
+                /**
+                 * Returns table, with two arguments `cpuTime` and `sysTime`.
+                 * Values are global and not per-thread.
+                 * @return cpuTime - time used by the process execution.
+                 * @return sysTime - time used by syscalls invoked by this process.
+                 */
+                getProcessTime(): { cpuTime: number, sysTime: number } {
+                    const [cpuTime, sysTime] = sys(Syscall.GetProcessTime);
+                    return { cpuTime, sysTime };
                 },
 
                 /**
                  * Makes you foreground process.
                  * Will be removed later.
                  */
-                setForegroundProcess: () => {
+                setForegroundProcess() {
                     sys(Syscall.SetForegroundProcess);
                 },
 
@@ -75,7 +114,7 @@ export namespace EnvironmentFactory {
                  * Determines if stdin should eat your inputs or not (for terminal).
                  * @param enabled - if raw input mode should be enabled (system default is false)
                  */
-                setRawInputMode: (enabled: boolean) => {
+                setRawInputMode(enabled: boolean) {
                     // @ts-ignore
                     sys(Syscall.SetRawInputMode, ____);
                 }
@@ -154,6 +193,7 @@ export namespace EnvironmentFactory {
 
             term: term,
             keys: keys,
+            math: math,
         }
     }
 }

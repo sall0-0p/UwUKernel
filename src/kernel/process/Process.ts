@@ -31,6 +31,10 @@ export class Process {
     public workingDir: string;
     public rawInputMode: boolean = false;
 
+    // Time tracking
+    public cpuTime: number = 0;
+    public sysTime: number = 0;
+
     private activeInterceptors: IProcessInterceptor[] = [];
 
     public constructor(private scheduler: Scheduler, workingDir: string, parent?: Process, handleOverrides?: Map<number, IHandle>) {

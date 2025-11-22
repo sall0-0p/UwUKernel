@@ -1,15 +1,15 @@
-import {Thread, ThreadState, TID, WaitingReason} from "./Thread";
+import {Thread, ThreadExitStatus, ThreadState, TID, WaitingReason} from "./Thread";
 import {SyscallExecutor} from "../syscall/SyscallExecutor";
 import {EventManager} from "../event/EventManager";
 import {Logger} from "../lib/Logger";
-import {EventType, IEvent} from "../event/Event";
+import {EventType} from "../event/Event";
 import {ProcessManager} from "./ProcessManager";
 import {ReadyQueue} from "./ReadyQueue";
 
 // Time in ms, after which preemption should happen.
-const BASE_QUANT = 20;
+const BASE_QUANT = 30;
 // How often do we check if preemption should happen (instructions).
-const I_QUANT = 2500;
+const I_QUANT = 15000;
 
 export class Scheduler {
     private threads: Map<TID, Thread> = new Map();
@@ -28,7 +28,7 @@ export class Scheduler {
     }
 
     public run() {
-        let schedulerTimer = os.startTimer(1);
+        let schedulerTimer = os.startTimer(0.05);
 
         while (true) {
             this.checkWaitingThreads();
@@ -79,26 +79,37 @@ export class Scheduler {
 
     // Helpers
     private executeThread(thread: Thread) {
-        const endTime = os.epoch("utc")
-            // Add quant multiplied by priority, lowest priority gets 10ms, highest gets 50ms.
-            + BASE_QUANT;
+        // Setup an interrupt
+        const startedTime = os.epoch("utc");
+        const endTime = startedTime + BASE_QUANT;
         debug.sethook(thread.thread, () => {
             if (os.epoch("utc") > endTime) {
                 coroutine.yield("preempt");
             }
         }, "", I_QUANT);
-        const [ok, interruptReason, ...result] = coroutine.resume(thread.thread, ...thread.nextRunArguments);
 
-        const exitStatus = coroutine.status(thread.thread)
+        // Start execution
+        const [ok, interruptReason, ...result] = coroutine.resume(thread.thread, ...thread.nextRunArguments);
+        const finishedTime = os.epoch("utc");
+        const burstLength = finishedTime - startedTime;
+        thread.parent.cpuTime += burstLength;
+
+        // Handle exit status
+        const exitStatus = coroutine.status(thread.thread);
         if (ok && exitStatus !== "dead") {
             thread.nextRunArguments = [];
             thread.state = ThreadState.Waiting;
 
             this.handleReturns(thread, interruptReason, result);
-        } else {
-            Logger.warn("Thread %s exited due to error / end of execution!", thread.tid)
-            Logger.warn("Reason: %s", interruptReason || "Finished execution.");
+        } else if (ok && exitStatus === "dead") {
+            Logger.info("Thread %s finished execution safely (0)!", thread.tid)
             thread.state = ThreadState.Terminated;
+            thread.exitStatus = ThreadExitStatus.Finished;
+        } else {
+            Logger.error("Thread %s finished execution due to error (1)!", thread.tid);
+            Logger.error("Error message: %s", interruptReason);
+            thread.state = ThreadState.Terminated;
+            thread.exitStatus = ThreadExitStatus.Errored;
         }
 
         debug.sethook();
