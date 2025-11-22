@@ -16,6 +16,8 @@ export class Scheduler {
     private readyThreads: ReadyQueue = new ReadyQueue();
     private waitingThreads: Thread[] = [];
 
+    private nextSleepTimer: number | undefined;
+
     public eventManager!: EventManager;
     public processManager!: ProcessManager;
     public syscallExecutor!: SyscallExecutor;
@@ -28,31 +30,39 @@ export class Scheduler {
     }
 
     public run() {
-        let schedulerTimer = os.startTimer(0.05);
-
         while (true) {
+            // Manage incoming events
+            const eventData = os.pullEventRaw();
+            const eventType = eventData[0];
+            if (eventType === "terminate") break;
+
+            if (eventType === "timer" && eventData[1] === this.nextSleepTimer) {
+                this.nextSleepTimer = undefined;
+            } else if (eventType !== "scheduler_yield") {
+                    this.eventManager.dispatch(eventData);
+            }
+
+            // Prepare to cycle
             this.checkWaitingThreads();
             const cycleThreads = this.readyThreads.toArray();
+
             while (cycleThreads.length > 0) {
                 const thread = cycleThreads.shift();
-                this.readyThreads.shift();
-                if (thread) {
-                    if (thread.state === ThreadState.Ready) {
-                        this.executeThread(thread);
+                const nextThread = this.readyThreads.shift();
+                if (nextThread) {
+                    if (nextThread.state === ThreadState.Ready) {
+                        this.executeThread(nextThread);
                     } else {
-                        thread.state = ThreadState.Terminated;
+                        nextThread.state = ThreadState.Terminated;
                     }
                 }
             }
 
-            // Wait for next event;
-            const [...eventData] = os.pullEventRaw();
-
-            if (eventData[0] === "terminate") break;
-            if (eventData[0] === "timer" && eventData[1] === schedulerTimer) {
-                schedulerTimer = os.startTimer(0.05);
+            const hasWork = this.readyThreads.toArray().length > 0;
+            if (hasWork) {
+                os.queueEvent("scheduler_yield");
             } else {
-                this.eventManager.dispatch(eventData);
+                this.scheduleNextSleep();
             }
         }
     }
@@ -154,6 +164,32 @@ export class Scheduler {
 
             thread.state = ThreadState.Ready;
             this.readyThreads.push(thread);
+        }
+    }
+
+    private scheduleNextSleep() {
+        if (this.waitingThreads.length === 0) return;
+
+        let minWakeUp = math.huge;
+        const now = os.epoch("utc");
+
+        for (const thread of this.waitingThreads) {
+            if (thread.wakeUpAt && thread.wakeUpAt < minWakeUp) {
+                minWakeUp = thread.wakeUpAt;
+            }
+            if (thread.waitingTimeout && thread.waitingTimeout < minWakeUp) {
+                minWakeUp = thread.waitingTimeout;
+            }
+        }
+
+        if (minWakeUp !== math.huge) {
+            const duration = Math.max(0, (minWakeUp - now) / 1000);
+
+            if (this.nextSleepTimer) {
+                os.cancelTimer(this.nextSleepTimer);
+            }
+
+            this.nextSleepTimer = os.startTimer(duration);
         }
     }
 
