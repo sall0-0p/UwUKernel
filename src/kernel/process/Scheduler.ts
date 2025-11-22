@@ -44,22 +44,21 @@ export class Scheduler {
 
             // Prepare to cycle
             this.checkWaitingThreads();
-            const cycleThreads = this.readyThreads.toArray();
+            let runCount = this.readyThreads.count();
 
-            while (cycleThreads.length > 0) {
-                const thread = cycleThreads.shift();
-                const nextThread = this.readyThreads.shift();
-                if (nextThread) {
-                    if (nextThread.state === ThreadState.Ready) {
-                        this.executeThread(nextThread);
+            while (runCount > 0) {
+                const thread = this.readyThreads.pop();
+                if (thread) {
+                    if (thread.state === ThreadState.Ready) {
+                        this.executeThread(thread);
                     } else {
-                        nextThread.state = ThreadState.Terminated;
+                        thread.state = ThreadState.Terminated;
                     }
                 }
+                runCount--;
             }
 
-            const hasWork = this.readyThreads.toArray().length > 0;
-            if (hasWork) {
+            if (this.readyThreads.hasWork()) {
                 os.queueEvent("scheduler_yield");
             } else {
                 this.scheduleNextSleep();

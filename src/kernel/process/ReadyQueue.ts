@@ -2,6 +2,8 @@ import {Thread, ThreadPriority} from "./Thread";
 
 export class ReadyQueue {
     public queues = new Map<number, Thread[]>;
+    private _count: number = 0;
+
     public constructor() {
         this.queues.set(ThreadPriority.VeryHigh, []);
         this.queues.set(ThreadPriority.High, []);
@@ -15,26 +17,33 @@ export class ReadyQueue {
         const queue = this.queues.get(priority);
         if (!queue) error("Invalid priority!");
         queue.push(thread);
+        this._count++;
     }
 
-    public shift(): Thread | undefined {
+    public pop(): Thread | undefined {
+        if (this._count === 0) return undefined;
+
         let queueIndex = 0;
         let thread : Thread | undefined;
         while (queueIndex < 5 && !thread) {
-            thread = this.queues.get(queueIndex)!.pop();
+            const queue = this.queues.get(queueIndex)!;
+            if (queue.length > 0) {
+                thread = queue.shift();
+            }
             queueIndex++;
+        }
+
+        if (thread) {
+            this._count--;
         }
         return thread;
     }
 
-    public toArray(): Thread[] {
-        let result: Thread[] = [];
-        this.queues.forEach((q: Thread[]): void => {
-            result = [
-                ...result,
-                ...q,
-            ]
-        });
-        return result;
+    public hasWork(): boolean {
+        return this._count > 0;
+    }
+
+    public count(): number {
+        return this._count;
     }
 }
