@@ -1,5 +1,5 @@
-import {HandleId, Process} from "../Process";
-import {Thread} from "../Thread";
+import {HandleId, Process} from "../process/Process";
+import {Thread} from "../process/Thread";
 
 export interface IHandle {
     onAdded?(process: Process, id: HandleId): void;

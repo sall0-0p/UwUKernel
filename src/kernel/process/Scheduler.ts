@@ -114,7 +114,7 @@ export class Scheduler {
             Logger.info("Thread %s finished execution safely (0)!", thread.tid)
             thread.state = ThreadState.Terminated;
             thread.exitStatus = ThreadExitStatus.Finished;
-        } else {
+        } else if (!ok) {
             Logger.error("Thread %s finished execution due to error (1)!", thread.tid);
             Logger.error("Error message: %s", interruptReason);
             thread.state = ThreadState.Terminated;

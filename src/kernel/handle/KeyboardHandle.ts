@@ -1,9 +1,9 @@
 import {IReadHandle} from "./IHandle";
-import {Thread} from "../Thread";
-import {EventType, IEvent} from "../../event/Event";
-import {HandleId, Process} from "../Process";
-import {IProcessInterceptor} from "../IProcessInterceptor";
-import {Scheduler} from "../Scheduler";
+import {Thread} from "../process/Thread";
+import {EventType, IEvent} from "../event/Event";
+import {HandleId, Process} from "../process/Process";
+import {IProcessInterceptor} from "../process/IProcessInterceptor";
+import {Scheduler} from "../process/Scheduler";
 import {TerminalHandle} from "./TerminalHandle";
 
 export class KeyboardHandle implements IReadHandle, IProcessInterceptor {

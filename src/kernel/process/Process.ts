@@ -1,8 +1,8 @@
 import {Thread, ThreadState, TID} from "./Thread";
-import {IHandle} from "./handle/IHandle";
-import {TerminalHandle} from "./handle/TerminalHandle";
+import {IHandle} from "../handle/IHandle";
+import {TerminalHandle} from "../handle/TerminalHandle";
 import {EventType, IEvent} from "../event/Event";
-import {KeyboardHandle} from "./handle/KeyboardHandle";
+import {KeyboardHandle} from "../handle/KeyboardHandle";
 import {Scheduler} from "./Scheduler";
 import {Logger} from "../lib/Logger";
 import {IProcessInterceptor} from "./IProcessInterceptor";

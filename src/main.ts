@@ -3,14 +3,22 @@ import {ProcessManager} from "./kernel/process/ProcessManager";
 import {EventManager} from "./kernel/event/EventManager";
 import {Logger} from "./kernel/lib/Logger";
 import {SyscallExecutor} from "./kernel/syscall/SyscallExecutor";
+import {VFSManager} from "./kernel/vfs/VFSManager";
+import {RootFsDriver} from "./kernel/drivers/fs/RootFsDriver";
+import {RomFSDriver} from "./kernel/drivers/fs/RomFsDriver";
 
 Logger.init();
 Logger.info("Hallo!");
 print("Hallo!");
+
+const vfsManager = new VFSManager();
+vfsManager.mount("/", new RootFsDriver(""));
+vfsManager.mount("/rom", new RomFSDriver("rom"));
+
 const scheduler = new Scheduler();
 const pm = new ProcessManager(scheduler);
 const em = new EventManager(scheduler, pm);
-const se = new SyscallExecutor(scheduler, em, pm);
+const se = new SyscallExecutor(scheduler, em, pm, vfsManager);
 scheduler.eventManager = em;
 scheduler.processManager = pm;
 scheduler.syscallExecutor = se;
@@ -30,16 +38,16 @@ scheduler.syscallExecutor = se;
 // const code5 = "print('Testing sleep! Zzz Zzz Zzz') sleep(1) print('Woke up!')";
 // const process5 = pm.createProcess("/", code5);
 //
-// const code6 =
-//     "stdout.writeLine('Version: ' .. os.version()); " +
-//     "stdout.writeLine('PID: ' .. os.getPid());" +
-//     "local processTime = os.getProcessTime();" +
-//     "stdout.writeLine('CPU time: ' .. processTime.cpuTime);" +
-//     "stdout.writeLine('SYS time: ' .. processTime.sysTime);" +
-//     "stdout.writeLine('epoch: ' .. os.epoch('utc'));";
+const code6 =
+    "stdout.writeLine('Version: ' .. os.version()); " +
+    "stdout.writeLine('PID: ' .. os.getPid());" +
+    "local processTime = os.getProcessTime();" +
+    "stdout.writeLine('CPU time: ' .. processTime.cpuTime);" +
+    "stdout.writeLine('SYS time: ' .. processTime.sysTime);" +
+    "stdout.writeLine('epoch: ' .. os.epoch('utc'));";
 // const process6 = pm.createProcess("/", code6);
-//
-// const code7 = "os.setForegroundProcess() while true do local command = stdin.readLine(); if command == 'raw' then stdout.writeLine(''); stdout.writeLine('Process: Switching to raw input mode! Your yapping rights are revoked.'); os.setRawInputMode(true); end end";
+
+const code7 = "os.setForegroundProcess() while true do local command = stdin.readLine(); if command == 'raw' then stdout.writeLine(''); stdout.writeLine('Process: Switching to raw input mode! Your yapping rights are revoked.'); os.setRawInputMode(true); end end";
 // const process7 = pm.createProcess("/", code7);
 
 const code8 =
@@ -62,6 +70,25 @@ const code8 =
     "print('SYS (Kern): ' .. t.sysTime .. 'ms'); " +
     "print('Total Real: ' .. (os.epoch('utc') - start) / 1000); ";
 
-const process8 = pm.createProcess("/", code8);
+// const process8 = pm.createProcess("/", code8);
+
+const code9 =
+    "local file = fs.open('startup.lua', 'r');" +
+    "stdout.write(file.readAll());" +
+    "file.close();" +
+    " " +
+    "local list = fs.list('/');" +
+    "local i = 1;" +
+    "while i <= #list do" +
+    "   stdout.writeLine(list[i]);" +
+    "   i = i + 1;" +
+    "end;" +
+    " " +
+    "stdout.writeLine(fs.exists('startup.lua'));" +
+    " " +
+    "fs.mkdir('/cool/folder/for/you');" +
+    " " +
+    ""
+const process9 = pm.createProcess("/", code9);
 
 scheduler.run();

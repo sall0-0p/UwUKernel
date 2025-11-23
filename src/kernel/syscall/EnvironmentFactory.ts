@@ -6,7 +6,7 @@ export namespace EnvironmentFactory {
     function sys(id: Syscall, ...args: any[]): any[] {
         const [success, ...results] = coroutine.yield("syscall", id, ...args);
         if (!success) {
-            error(results[1]);
+            error(results[0], 2);
         }
         return results;
     }
@@ -92,6 +92,22 @@ export namespace EnvironmentFactory {
                 },
 
                 /**
+                 * Returns current working directory.
+                 */
+                getWorkingDirectory(): string {
+                    const [cwd] = sys(Syscall.GetCWD);
+                    return cwd;
+                },
+
+                /**
+                 * Sets current working directory.
+                 */
+                setWorkingDirectory(path: string): void {
+                    // @ts-ignore
+                    sys(Syscall.SetCWD, self);
+                },
+
+                /**
                  * Returns table, with two arguments `cpuTime` and `sysTime`.
                  * Values are global and not per-thread.
                  * @return cpuTime - time used by the process execution.
@@ -120,13 +136,124 @@ export namespace EnvironmentFactory {
                 }
             },
 
+            fs: {
+                open(path: string, mode: string) {
+                    // @ts-ignore
+                    const [handleId] = sys(Syscall.FsOpen, self, path);
+                    if (path === "r") {
+                        return {
+                            read(count?: number): string {
+                                // @ts-ignore
+                                const [data] = sys(Syscall.rHandleRead, handleId, self || 1);
+                                return data;
+                            },
+
+                            readLine(): string | null {
+                                const [data] = sys(Syscall.rHandleReadLine, handleId);
+                                return data;
+                            },
+
+                            readAll(): string | null {
+                                const [data] = sys(Syscall.rHandleReadAll, handleId);
+                                return data;
+                            },
+
+                            close(): void {
+                                sys(Syscall.aHandleClose, handleId);
+                            },
+                        }
+                    } else if (path === "w" || path === "a") {
+                        return {
+                            write(text: string): void {
+                                // @ts-ignore
+                                sys(Syscall.wHandleWrite, handleId, self);
+                            },
+
+                            writeLine(text: string): void {
+                                // @ts-ignore
+                                sys(Syscall.wHandleWriteLine, handleId, self);
+                            },
+
+                            flush(): void {
+                                sys(Syscall.wHandleFlush, handleId);
+                            },
+
+                            close(): void {
+                                sys(Syscall.aHandleClose, handleId);
+                            },
+                        }
+                    }
+                },
+
+                list(path: string): string[] {
+                    // @ts-ignore
+                    const [data] = sys(Syscall.FsList, self);
+                    return data;
+                },
+
+                exists(path: string): boolean {
+                    // @ts-ignore
+                    const [exists] = sys(Syscall.FsExists, self);
+                    return exists;
+                },
+
+                makeDir(path: string): void {
+                    // @ts-ignore
+                    sys(Syscall.FsMakeDir, self);
+                },
+
+                isDir(path: string): void {
+                    // @ts-ignore
+                    sys(Syscall.FsIsDir, self);
+                },
+
+                move(from: string, to: string): void {
+                    // @ts-ignore
+                    sys(Syscall.FsMove, self, from);
+                },
+
+                copy(from: string, to: string): void {
+                    // @ts-ignore
+                    sys(Syscall.FsCopy, self, from);
+                },
+
+                delete(path: string): void {
+                    // @ts-ignore
+                    sys(Syscall.FsDelete, self);
+                },
+
+                getSize(path: string): number {
+                    // @ts-ignore
+                    const [result] = sys(Syscall.FsSize, self);
+                    return result;
+                },
+
+                getCapacity(path: string): number {
+                    // @ts-ignore
+                    const [result] = sys(Syscall.FsGetCapacity, self);
+                    return result;
+                },
+
+                getFreeSpace(path: string): number {
+                    // @ts-ignore
+                    const [result] = sys(Syscall.FsGetFreeSpace, self);
+                    return result;
+                },
+
+                getMetadata(path: string): object {
+                    // @ts-ignore
+                    const [result] = sys(Syscall.FsGetMetadata, self);
+                    return result;
+                }
+            },
+
             stdin: {
                 isEmpty(): boolean {
                     const [bool] = sys(Syscall.rHandleIsEmpty, 0);
                     return bool;
                 },
 
-                read(count?: number): string | number[] | null  {
+                read(count?: number): string | null  {
                     // @ts-ignore
                     const [data] = sys(Syscall.rHandleRead, 0, self || 1);
                     return data;
@@ -137,7 +264,7 @@ export namespace EnvironmentFactory {
                     return data;
                 },
 
-                readAll(): string | number[] | null {
+                readAll(): string | null {
                     const [data] = sys(Syscall.rHandleReadAll, 0);
                     return data;
                 },
@@ -194,6 +321,8 @@ export namespace EnvironmentFactory {
             term: term,
             keys: keys,
             math: math,
+            table: table,
+            unpack: unpack,
         }
     }
 }

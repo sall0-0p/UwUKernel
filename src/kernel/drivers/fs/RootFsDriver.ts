@@ -74,12 +74,12 @@ export class RootFsDriver implements IFsDriver {
     }
 
     exists(path: string): boolean {
-        path = fs.combine(this.physicalRoot, path);
+        path = "/" + fs.combine(this.physicalRoot, path);
         return fs.exists(path);
     }
 
     open(path: string, mode: FsOpenMode): IFsStateStream | undefined {
-        path = fs.combine(this.physicalRoot, path);
+        path = "/" + fs.combine(this.physicalRoot, path);
         // @ts-ignore
         const [handle] = fs.open(path, mode);
         if (handle) {
@@ -90,30 +90,30 @@ export class RootFsDriver implements IFsDriver {
     }
 
     list(path: string): string[] {
-        path = fs.combine(this.physicalRoot, path);
+        path = "/" + fs.combine(this.physicalRoot, path);
         return fs.list(path);
     }
 
     mkdir(path: string): void {
-        path = fs.combine(this.physicalRoot, path);
+        path = "/" + fs.combine(this.physicalRoot, path);
         fs.makeDir(path);
     }
 
     move(from: string, to: string): void {
-        from = fs.combine(this.physicalRoot, from);
-        to = fs.combine(this.physicalRoot, to);
+        from = "/" + fs.combine(this.physicalRoot, from);
+        to = "/" + fs.combine(this.physicalRoot, to);
         fs.move(from, to);
     }
 
 
     copy(from: string, to: string): void {
-        from = fs.combine(this.physicalRoot, from);
-        to = fs.combine(this.physicalRoot, to);
+        from = "/" + fs.combine(this.physicalRoot, from);
+        to = "/" + fs.combine(this.physicalRoot, to);
         fs.copy(from, to);
     }
 
     delete(path: string): void {
-        path = fs.combine(this.physicalRoot, path);
+        path = "/" + fs.combine(this.physicalRoot, path);
         fs.delete(path);
     }
 
@@ -126,7 +126,7 @@ export class RootFsDriver implements IFsDriver {
     }
 
     getMetadata(path: string): IFileMetadata {
-        path = fs.combine(this.physicalRoot, path);
+        path = "/" + fs.combine(this.physicalRoot, path);
         return {
             owner: 0,
             permissions: 0o000,
@@ -138,7 +138,7 @@ export class RootFsDriver implements IFsDriver {
     }
 
     getSize(path: string): number {
-        path = fs.combine(this.physicalRoot, path);
+        path = "/" + fs.combine(this.physicalRoot, path);
         return fs.getSize(path);
     }
 }
