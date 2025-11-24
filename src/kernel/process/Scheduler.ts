@@ -1,10 +1,11 @@
-import {Thread, ThreadExitStatus, ThreadState, TID, WaitingReason} from "./Thread";
+import {Thread, ThreadState, TID, WaitingReason} from "./Thread";
 import {SyscallExecutor} from "../syscall/SyscallExecutor";
 import {EventManager} from "../event/EventManager";
 import {Logger} from "../lib/Logger";
 import {EventType} from "../event/Event";
 import {ProcessManager} from "./ProcessManager";
 import {ReadyQueue} from "./ReadyQueue";
+import {PID} from "./Process";
 
 // Time in ms, after which preemption should happen.
 const BASE_QUANT = 30;
@@ -113,12 +114,18 @@ export class Scheduler {
         } else if (ok && exitStatus === "dead") {
             Logger.info("Thread %s finished execution safely (0)!", thread.tid)
             thread.state = ThreadState.Terminated;
-            thread.exitStatus = ThreadExitStatus.Finished;
+            thread.exitStatus = 0
+
+            if (thread.tid === thread.parent.mainThread.tid) {
+                this.processManager.exitProcess(thread.parent.pid, 0, "Main thread finished execution.");
+            }
         } else if (!ok) {
             Logger.error("Thread %s finished execution due to error (1)!", thread.tid);
             Logger.error("Error message: %s", interruptReason);
             thread.state = ThreadState.Terminated;
-            thread.exitStatus = ThreadExitStatus.Errored;
+            thread.exitStatus = 1
+
+            this.processManager.exitProcess(thread.parent.pid, 1, interruptReason);
         }
 
         debug.sethook();
@@ -131,20 +138,25 @@ export class Scheduler {
             switch (thread.waitingReason) {
                 case WaitingReason.Sleep:
                     if (thread.wakeUpAt! < os.epoch("utc")) {
-                        this.readyThreads.push(thread);
-                        thread.state = ThreadState.Ready;
+                        // this.readyThreads.push(thread);
+                        // thread.state = ThreadState.Ready;
+                        this.readyThread(thread, [true]);
                     } else {
                         newSleeps.push(thread);
                     }
                     break;
                 case WaitingReason.Event:
                     if (thread.waitingTimeout! < os.epoch("utc")) {
-                        this.readyThreads.push(thread);
-                        thread.state = ThreadState.Ready;
-                        thread.nextRunArguments = [null];
+                        this.readyThread(thread, [true]);
                     } else {
                         newSleeps.push(thread);
                     }
+                    break;
+                case WaitingReason.ProcessWait:
+                    newSleeps.push(thread);
+                    break;
+                case WaitingReason.Mutex:
+                    newSleeps.push(thread);
                     break;
             }
 
@@ -192,12 +204,54 @@ export class Scheduler {
         }
     }
 
-    // Event management is here, to an extent.
+    // Wait for an event arrival
     public waitForEvent(thread: Thread, filter: EventType[], timeout: number) {
         thread.state = ThreadState.Waiting;
         thread.waitingReason = WaitingReason.Event;
         thread.waitingTimeout = os.epoch("utc") + timeout;
         thread.eventFilter = filter;
         this.waitingThreads.push(thread);
+    }
+
+    // Wait for process to finish
+    public waitForProcess(thread: Thread, targetPid: PID) {
+        thread.state = ThreadState.Waiting;
+        thread.waitingReason = WaitingReason.ProcessWait;
+        thread.waitingForPid = targetPid;
+        this.waitingThreads.push(thread);
+    }
+
+    // Revive all threads that were waiting for death of the process.
+    public onProcessExit(deadPid: number, exitCode: number, exitReason: string, parentPid?: number) {
+        const stillWaiting: Thread[] = [];
+
+        for (const thread of this.waitingThreads) {
+            const isWaitingForSpecific = (thread.waitingReason === WaitingReason.ProcessWait && thread.waitingForPid === deadPid);
+            const isWaitingForAny = (thread.waitingReason === WaitingReason.ProcessWait
+                && thread.waitingForPid === -1
+                && parentPid !== undefined
+                && thread.parent.pid === parentPid);
+
+            if (isWaitingForSpecific || isWaitingForAny) {
+                this.readyThread(thread, [true, deadPid, exitCode, exitReason]);
+            } else {
+                stillWaiting.push(thread);
+            }
+        }
+
+        this.waitingThreads = stillWaiting;
+    }
+
+    // Kill all threads that were related to this process.
+    public killProcessThreads(pid: number) {
+        this.waitingThreads = this.waitingThreads.filter(t => t.parent.pid !== pid);
+        this.readyThreads.removeThreadsForPid(pid);
+
+        for (const [tid, thread] of this.threads) {
+            if (thread.parent.pid === pid) {
+                thread.state = ThreadState.Terminated;
+                this.threads.delete(tid);
+            }
+        }
     }
 }

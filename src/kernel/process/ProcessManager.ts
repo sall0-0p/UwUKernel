@@ -1,4 +1,4 @@
-import {PID, Process} from "./Process";
+import {PID, Process, ProcessState} from "./Process";
 import {Thread} from "./Thread";
 import {EnvironmentFactory} from "../syscall/EnvironmentFactory";
 import {Scheduler} from "./Scheduler";
@@ -43,6 +43,61 @@ export class ProcessManager {
     }
 
     /**
+     * Exits the process.
+     * @param pid - identifier of the process to exit.
+     * @param exitCode - code to exit with, examples include `0` meaning success, `1` meaning error.
+     * @param exitReason - reason for exit (for example, error message).
+     */
+    public exitProcess(pid: PID, exitCode: number, exitReason?: string) {
+        const process = this.processes.get(pid);
+        if (!process) return;
+
+        process.state = ProcessState.Zombie;
+        process.exitCode = exitCode;
+        process.exitReason = exitReason || "No reason provided";
+        process.closeAllHandles();
+
+        this.scheduler.killProcessThreads(pid);
+        this.scheduler.onProcessExit(pid, exitCode, exitReason || "No reason provided", process.parent?.pid);
+
+        if (process.parent && (process.parent.state === "dead"
+            || process.parent.state === "zombie")) {
+            this.deleteProcess(process);
+        }
+    }
+
+    /**
+     * Wait for process to exit.
+     * @param pid - identifier of the process we are waiting for.
+     * @param waitingThread - thread that waits for it.
+     * @returns true if exited immediately, false if forced to yield.
+     */
+    public waitForProcessExit(pid: PID, waitingThread: Thread): boolean {
+        const target = this.processes.get(pid);
+
+        if (!target) {
+            this.scheduler.readyThread(waitingThread, [false, "No such process"]);
+            return true;
+        }
+
+        if (target.parent && target.parent.pid !== waitingThread.parent.pid) {
+            this.scheduler.readyThread(waitingThread, [false, "Process is not a child of this process"]);
+            return true;
+        }
+
+        if (target.state === ProcessState.Zombie) {
+            const code = target.exitCode;
+            const reason = target.exitReason;
+            this.deleteProcess(target);
+            this.scheduler.readyThread(waitingThread, [true, pid, code, reason]);
+            return true;
+        } else {
+            this.scheduler.waitForProcess(waitingThread, pid);
+            return false;
+        }
+    }
+
+    /**
      * Returns all processes existing.
      */
     public getAllProcesses(): Process[] {
@@ -57,5 +112,11 @@ export class ProcessManager {
      */
     public getProcessByPID(pid: PID): Process | undefined {
         return this.processes.get(pid);
+    }
+
+    // Remove process completely from the system.
+    private deleteProcess(process: Process) {
+        process.state = ProcessState.Dead;
+        this.processes.delete(process.pid);
     }
 }

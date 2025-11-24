@@ -1,4 +1,5 @@
 import {Thread, ThreadPriority} from "./Thread";
+import {PID} from "./Process";
 
 export class ReadyQueue {
     public queues = new Map<number, Thread[]>;
@@ -37,6 +38,17 @@ export class ReadyQueue {
             this._count--;
         }
         return thread;
+    }
+
+    public removeThreadsForPid(pid: PID) {
+        for (const [priority, queue] of this.queues) {
+            const filtered = queue.filter(t => t.parent.pid !== pid);
+
+            const removedCount = queue.length - filtered.length;
+            this._count -= removedCount;
+
+            this.queues.set(priority, filtered);
+        }
     }
 
     public hasWork(): boolean {

@@ -118,6 +118,20 @@ export class SyscallExecutor {
                 break;
             }
 
+            case Syscall.Exit: {
+                const code: number = args.length > 0 ? args[0] : 0;
+                const reason: string | undefined = args.length > 1 ? args[1] : undefined;
+
+                this.processManager.exitProcess(thread.parent.pid, code, reason);
+                break;
+            }
+
+            case Syscall.WaitForChildExit: {
+                const targetPid: number = args[0];
+                this.processManager.waitForProcessExit(targetPid, thread);
+                break;
+            }
+
             // Filesystem
             case Syscall.FsOpen: {
                 const originalPath: string = args[0];

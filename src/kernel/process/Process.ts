@@ -18,6 +18,12 @@ interface EncasedEvent {
     consumedBy: Map<TID, boolean>;
 }
 
+export enum ProcessState {
+    Alive = "alive",
+    Zombie = "zombie",
+    Dead = "dead",
+}
+
 export type HandleId = number;
 export type PID = number;
 export class Process {
@@ -25,11 +31,17 @@ export class Process {
     public readonly parent: Process | undefined;
     public readonly threads: Map<TID, Thread> = new Map();
     public readonly eventQueue: EncasedEvent[] = [];
+    public mainThread!: Thread;
 
     private handles: Map<HandleId, IHandle> = new Map();
     public environment: object | undefined;
     public workingDir: string;
     public rawInputMode: boolean = false;
+
+    // Exiting and dying
+    public state: ProcessState = ProcessState.Alive;
+    public exitCode: number | undefined;
+    public exitReason: string | undefined;
 
     // Time tracking
     public cpuTime: number = 0;
@@ -64,6 +76,10 @@ export class Process {
     }
 
     public addThread(thread: Thread) {
+        if (this.threads.size === 0) {
+            this.mainThread = thread;
+        }
+
         this.threads.set(thread.tid, thread);
     }
 
@@ -179,6 +195,19 @@ export class Process {
 
     public deregisterInterceptor(interceptor: IProcessInterceptor) {
         this.activeInterceptors = this.activeInterceptors.filter(i => i !== interceptor);
+    }
+
+    // Cleanup
+    public closeAllHandles() {
+        this.handles.forEach((handle, id) => {
+            try {
+                handle.close();
+            } catch (e) {
+                Logger.error(`Failed to close handle ${id} for PID ${this.pid}`);
+            }
+        });
+
+        this.handles.clear();
     }
 }
 

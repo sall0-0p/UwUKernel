@@ -12,6 +12,8 @@ export enum ThreadState {
 export enum WaitingReason {
     Sleep = "sleep",
     Event = "event",
+    ProcessWait = "processWait",
+    Mutex = "mutex",
 }
 
 export enum ThreadPriority {
@@ -22,11 +24,6 @@ export enum ThreadPriority {
     VeryLow = 4,
 }
 
-export enum ThreadExitStatus {
-    Finished = 0,
-    Errored = 1,
-}
-
 export type TID = number;
 export class Thread {
     public readonly tid: TID = TIDCounter.getNextTID();
@@ -34,14 +31,15 @@ export class Thread {
     public readonly parent: Process;
 
     // Error handling
-    public exitStatus: ThreadExitStatus | number | undefined;
-    public exitReason: string | undefined;
+    // 0 for good, 1 for bad.
+    public exitStatus: number | undefined;
 
     // State (scheduling)
     private priority: ThreadPriority = ThreadPriority.VeryHigh;
     public state: ThreadState;
     public nextRunArguments: any[] = [];
     public wakeUpAt: number | undefined;
+    public waitingForPid: number | undefined;
 
     // Properties when waiting for events.
     public eventFilter: EventType[] | undefined;

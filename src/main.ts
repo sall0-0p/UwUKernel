@@ -86,9 +86,114 @@ const code9 =
     " " +
     "stdout.writeLine(fs.exists('startup.lua'));" +
     " " +
-    "fs.mkdir('/cool/folder/for/you');" +
+    "fs.makeDir('/cool/folder/for/you');" +
     " " +
     ""
-const process9 = pm.createProcess("/", code9);
+// const process9 = pm.createProcess("/", code9);
+
+const codeVfsTest =
+    "print('=== VFS TEST SUITE STARTED ==='); " +
+
+    // 1. CWD and Path Navigation Tests
+    "print('[Test] CWD Navigation'); " +
+    "local initialCwd = os.getWorkingDirectory(); " +
+    "print('Initial CWD: ' .. initialCwd); " +
+
+    "os.setWorkingDirectory('/rom'); " +
+    "if os.getWorkingDirectory() == '/rom' then print('PASS: Changed to /rom'); else print('FAIL: CWD is ' .. os.getWorkingDirectory()); end; " +
+
+    "os.setWorkingDirectory('/'); " +
+    "print('Restored CWD to /'); " +
+
+    // 2. Directory Creation & Relative Path Logic
+    "print('[Test] Directory & Path Logic'); " +
+    "fs.makeDir('testing_zone'); " +
+    "fs.makeDir('testing_zone/sub_folder'); " +
+
+    "if fs.isDir('testing_zone/sub_folder') then print('PASS: Sub-folder created'); else print('FAIL: Sub-folder missing'); end; " +
+
+    // Change into directory to test relative file creation
+    "os.setWorkingDirectory('/testing_zone/sub_folder'); " +
+    "print('Current CWD: ' .. os.getWorkingDirectory()); " + // Should be /testing_zone/sub_folder
+
+    // 3. File Write (Relative)
+    "print('[Test] File Write (Relative)'); " +
+    "local f = fs.open('test_file.txt', 'w'); " +
+    "f.writeLine('Line 1: This file was created via relative path.'); " +
+    "f.writeLine('Line 2: Inside /testing_zone/sub_folder.'); " +
+    "f.close(); " +
+
+    // Verify file exists using Absolute Path
+    "if fs.exists('/testing_zone/sub_folder/test_file.txt') then print('PASS: File exists (Absolute check)'); else print('FAIL: File not found absolute'); end; " +
+
+    // 4. Parent Directory Resolution (..)
+    "print('[Test] Parent Directory Resolution (..)'); " +
+    // We are in /testing_zone/sub_folder. Writing to ../sibling.txt should create /testing_zone/sibling.txt
+    "f = fs.open('../sibling.txt', 'w'); " +
+    "f.write('Sibling content'); " +
+    "f.close(); " +
+
+    "if fs.exists('/testing_zone/sibling.txt') then print('PASS: Path .. resolution worked'); else print('FAIL: Path .. resolution failed'); end; " +
+
+    // 5. File Read & Content Verification
+    "print('[Test] Read Verification'); " +
+    "os.setWorkingDirectory('/'); " + // Go back to root
+    "f = fs.open('testing_zone/sub_folder/test_file.txt', 'r'); " +
+    "local line1 = f.readLine(); " +
+    "if line1 == 'Line 1: This file was created via relative path.' then print('PASS: Content match'); else print('FAIL: Content mismatch: ' .. line1); end; " +
+    "f.close(); " +
+
+    // 6. Move, Copy, Delete
+    "print('[Test] Manipulation (Move/Copy/Delete)'); " +
+    // Move sibling.txt to moved.txt
+    "fs.move('/testing_zone/sibling.txt', '/testing_zone/moved.txt'); " +
+    "if fs.exists('/testing_zone/moved.txt') and not fs.exists('/testing_zone/sibling.txt') then print('PASS: Move successful'); else print('FAIL: Move failed'); end; " +
+
+    // Copy moved.txt to copied.txt
+    "fs.copy('/testing_zone/moved.txt', '/testing_zone/copied.txt'); " +
+    "if fs.exists('/testing_zone/moved.txt') and fs.exists('/testing_zone/copied.txt') then print('PASS: Copy successful'); else print('FAIL: Copy failed'); end; " +
+
+    // 7. List
+    "print('[Test] Listing /testing_zone'); " +
+    "local list = fs.list('/testing_zone'); " +
+    "for i = 1, #list do " +
+    "    print(' - ' .. list[i]); " +
+    "end; " +
+
+    // Cleanup
+    "print('[Cleanup] Deleting /testing_zone...'); " +
+    "fs.delete('/testing_zone'); " +
+    "if not fs.exists('/testing_zone') then print('PASS: Cleanup successful'); else print('FAIL: Cleanup failed'); end; " +
+
+    "print('=== VFS TEST COMPLETE ==='); ";
+// const process10 = pm.createProcess("/", codeVfsTest);
+
+const parentCode = `
+    local myPid = os.getPid()
+    local targetPid = myPid + 1;
+    
+    os.sleep(1);
+    print("Parent ("..myPid.."): Waiting for child PID " .. targetPid)
+    
+    -- This call should block until child exits
+    local pid, code = os.waitForChildExit(targetPid)
+    
+    print("Parent ("..myPid.."): Resume! Child " .. pid .. " exited with code " .. code)
+`;
+
+const parentProcess = pm.createProcess("/", parentCode);
+print("Parent", parentProcess.pid);
+
+// Waitpid test (I just learned ` means multiline comment, lol)
+const childCode = `
+    local myPid = os.getPid()
+    print("Child ("..myPid.."): Starting work...")
+    os.sleep(2) 
+    print("Child ("..myPid.."): Work done. Exiting with code 33.")
+    os.exit(33)
+`;
+
+const childProcess = pm.createProcess("/", childCode, parentProcess);
+print("Child", childProcess.pid);
 
 scheduler.run();

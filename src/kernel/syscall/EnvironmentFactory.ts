@@ -5,7 +5,7 @@ import {IEvent} from "../event/Event";
 export namespace EnvironmentFactory {
     function sys(id: Syscall, ...args: any[]): any[] {
         const [success, ...results] = coroutine.yield("syscall", id, ...args);
-        if (!success) {
+        if (success === false) {
             error(results[0], 2);
         }
         return results;
@@ -133,6 +133,27 @@ export namespace EnvironmentFactory {
                 setRawInputMode(enabled: boolean) {
                     // @ts-ignore
                     sys(Syscall.SetRawInputMode, ____);
+                },
+
+                /**
+                 * Exits current process, with code (optional, defaults to 0) and exitReason.
+                 * @param code - code to exit with, generally 0 means good, 1 means error.
+                 * @param exitReason - reason the code exits, for example error message.
+                 */
+                exit(code?: number, exitReason?: string): void {
+                    // @ts-ignore
+                    sys(Syscall.Exit, self, code);
+                },
+
+                /**
+                 * Waits for the process with designated PID to finish.
+                 * @param pid - child to wait for, pass -1 to wait for any.
+                 * @returns number, number, string - first number corresponds to pid of the child that was waited for, second for its return code and third for reason.
+                 */
+                waitForChildExit(pid: number): LuaMultiReturn<[number, number, string]> {
+                    // @ts-ignore
+                    const [returnedPid, code, reason] = sys(Syscall.WaitForChildExit, self);
+                    return $multi(returnedPid, code, reason);
                 }
             },
 

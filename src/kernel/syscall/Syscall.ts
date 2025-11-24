@@ -10,6 +10,8 @@ export enum Syscall {
     GetProcessTime = "os.getProcessTime",
     GetCWD = "os.getWorkingDirectory",
     SetCWD = "os.setWorkingDirectory",
+    Exit = "os.exit",
+    WaitForChildExit = "os.waitForChildExit",
 
     SetForegroundProcess = "os.setForegroundProcess",
     SetRawInputMode = "os.setRawInputMode",
