@@ -2,13 +2,15 @@
 import {IFsStateStream} from "../../vfs/IFsStateStream";
 import {IFsDriver} from "../../vfs/IFsDriver";
 import {IFileMetadata} from "../../vfs/IFileMetadata";
+import {RootFsMetadataManager} from "./rootFs/RootFsMetadataManager";
 
 export class RomFsStream implements IFsStateStream {
     private isOpen: boolean = true;
 
     public constructor(
-        private handle: ReadFileHandle
-    ) {}
+        private handle: ReadFileHandle,
+    ) {
+    }
 
     public read(count: number): string | null {
         if (!this.isOpen) return null;
@@ -57,7 +59,8 @@ export class RomFSDriver implements IFsDriver {
     public readonly id: string = "romFs";
     public readonly isReadOnly: boolean = true;
 
-    public constructor(private physicalRoot: string) {}
+    public constructor(private physicalRoot: string) {
+    }
 
     private resolve(path: string): string {
         return fs.combine(this.physicalRoot, path);
@@ -82,9 +85,12 @@ export class RomFSDriver implements IFsDriver {
     public getMetadata(path: string): IFileMetadata {
         return {
             owner: 0,
-            permissions: 0o555,
+            group: 0,
+            permissions: 0o0555,
             created: 0,
             modified: 0,
+            isSystem: false,
+            isReadOnly: false,
             isDirectory: fs.isDir(this.resolve(path)),
             size: fs.getSize(this.resolve(path))
         };

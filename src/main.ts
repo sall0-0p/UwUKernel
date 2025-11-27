@@ -4,8 +4,8 @@ import {EventManager} from "./kernel/event/EventManager";
 import {Logger} from "./kernel/lib/Logger";
 import {SyscallExecutor} from "./kernel/syscall/SyscallExecutor";
 import {VFSManager} from "./kernel/vfs/VFSManager";
-import {RootFsDriver} from "./kernel/drivers/fs/RootFsDriver";
 import {RomFSDriver} from "./kernel/drivers/fs/RomFsDriver";
+import {RootFsDriver} from "./kernel/drivers/fs/rootFs/RootFsDriver";
 
 Logger.init();
 Logger.info("Hallo!");
@@ -22,10 +22,10 @@ const se = new SyscallExecutor(scheduler, em, pm, vfsManager);
 scheduler.eventManager = em;
 scheduler.processManager = pm;
 scheduler.syscallExecutor = se;
-//
+
 // const code1 = "print('Running 1!') _G.counter = 0; while true do _G.counter = _G.counter + 1 end";
 // const process1 = pm.createProcess("/", code1);
-// //
+
 // const code2 = "print('Running 2!') while true do term.setCursorPos(1, 19); term.write(_G.counter); end";
 // const thread2 = pm.createThread(code2, process1);
 
@@ -37,7 +37,7 @@ scheduler.syscallExecutor = se;
 
 // const code5 = "print('Testing sleep! Zzz Zzz Zzz') sleep(1) print('Woke up!')";
 // const process5 = pm.createProcess("/", code5);
-//
+
 const code6 =
     "stdout.writeLine('Version: ' .. os.version()); " +
     "stdout.writeLine('PID: ' .. os.getPid());" +
@@ -69,7 +69,6 @@ const code8 =
     "print('CPU (User): ' .. t.cpuTime .. 'ms'); " +
     "print('SYS (Kern): ' .. t.sysTime .. 'ms'); " +
     "print('Total Real: ' .. (os.epoch('utc') - start) / 1000); ";
-
 // const process8 = pm.createProcess("/", code8);
 
 const code9 =
@@ -93,6 +92,7 @@ const code9 =
 
 const codeVfsTest =
     "print('=== VFS TEST SUITE STARTED ==='); " +
+    "fs.list('/'); " +
 
     // 1. CWD and Path Navigation Tests
     "print('[Test] CWD Navigation'); " +
@@ -160,13 +160,17 @@ const codeVfsTest =
     "    print(' - ' .. list[i]); " +
     "end; " +
 
+    // 8. Metadata
+    "local metadata = fs.getMetadata('/testing_zone/moved.txt');" +
+    "print(metadata.owner, metadata.permissions, metadata.modified, metadata.size);" +
+
     // Cleanup
     "print('[Cleanup] Deleting /testing_zone...'); " +
     "fs.delete('/testing_zone'); " +
     "if not fs.exists('/testing_zone') then print('PASS: Cleanup successful'); else print('FAIL: Cleanup failed'); end; " +
 
     "print('=== VFS TEST COMPLETE ==='); ";
-// const process10 = pm.createProcess("/", codeVfsTest);
+const process10 = pm.createProcess("/", codeVfsTest);
 
 const parentCode = `
     local myPid = os.getPid()
@@ -180,9 +184,8 @@ const parentCode = `
     
     print("Parent ("..myPid.."): Resume! Child " .. pid .. " exited with code " .. code)
 `;
-
-const parentProcess = pm.createProcess("/", parentCode);
-print("Parent", parentProcess.pid);
+// const parentProcess = pm.createProcess("/", parentCode);
+// print("Parent", parentProcess.pid);
 
 // Waitpid test (I just learned ` means multiline comment, lol)
 const childCode = `
@@ -192,8 +195,7 @@ const childCode = `
     print("Child ("..myPid.."): Work done. Exiting with code 33.")
     os.exit(33)
 `;
-
-const childProcess = pm.createProcess("/", childCode, parentProcess);
-print("Child", childProcess.pid);
+// const childProcess = pm.createProcess("/", childCode, parentProcess);
+// print("Child", childProcess.pid);
 
 scheduler.run();
