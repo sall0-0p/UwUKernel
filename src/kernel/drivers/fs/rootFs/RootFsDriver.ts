@@ -3,6 +3,7 @@ import {IFileMetadata} from "../../../vfs/IFileMetadata";
 import {IFsStateStream} from "../../../vfs/IFsStateStream";
 import {RootFsStateStream} from "./RootFsStateStream";
 import {RootFsMetadataManager} from "./RootFsMetadataManager";
+import {Logger} from "../../../lib/Logger";
 
 export class RootFsDriver implements IFsDriver {
     public readonly id: string = "rootFs";
@@ -74,8 +75,13 @@ export class RootFsDriver implements IFsDriver {
 
     setMetadata(path: string, metadata: IFileMetadata): void {
         path = "/" + fs.combine(this.physicalRoot, path);
-        this.metadataManager.set(path, metadata);
+        Logger.info(path);
+        Logger.info(textutils.serialize(metadata));
+        Logger.info(debug.traceback());
+        const result = this.metadataManager.set(path, metadata);
+        Logger.info(`${result}`);
     }
+
     getSize(path: string): number {
         path = "/" + fs.combine(this.physicalRoot, path);
         return fs.getSize(path);

@@ -29,7 +29,7 @@ const CURRENT_VERSION = 1;
 
 export class RootFsMetadataManager {
     constructor(private physicalRoot: string) {
-
+        this.init();
     }
 
     // Reconcile the tree.
@@ -90,7 +90,7 @@ export class RootFsMetadataManager {
             }
 
             // Recursively reconcile subdirectories
-            if (fs.isDir(fullPath)) {
+            if (fs.isDir(fullPath) && this.load(fullPath).type !== "m" && fullPath !== "/rom") {
                 this.reconcile(fullPath);
             }
         }
@@ -208,6 +208,7 @@ export class RootFsMetadataManager {
         }
 
         return {
+            type: entry.type,
             owner: entry.user,
             group: entry.group,
             permissions: entry.permissions,
@@ -277,7 +278,7 @@ export class RootFsMetadataManager {
         // Map IFileMetadata back to internal MetadataEntry format
         const entry: MetadataEntry = {
             name: name,
-            type: meta.isDirectory ? "d" : "f",
+            type: meta.type,
             permissions: meta.permissions,
             user: meta.owner,
             group: meta.group,
@@ -386,6 +387,7 @@ export class RootFsMetadataManager {
         const isDir = fs.isDir(path);
         const defaultPerms = isDir ? 0o0755 : 0o0644;
         return {
+            type: isDir ? "d" : "f",
             owner: 0,
             group: 0,
             permissions: defaultPerms,

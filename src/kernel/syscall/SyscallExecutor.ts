@@ -144,7 +144,7 @@ export class SyscallExecutor {
                 }
 
                 try {
-                    const result = this.vfsManager.open(resolvedPath, mode as FsOpenMode);
+                    const result = this.vfsManager.open(resolvedPath, mode as FsOpenMode, process);
                     const handleId = thread.parent.addHandle(result);
                     this.returnSuccess(thread, handleId);
                 } catch (e) {
@@ -159,7 +159,7 @@ export class SyscallExecutor {
                 const resolvedPath = this.resolvePath(thread.parent, originalPath);
 
                 try {
-                    const result = this.vfsManager.list(resolvedPath);
+                    const result = this.vfsManager.list(resolvedPath, process);
                     this.returnSuccess(thread, result);
                 } catch (e) {
                     this.returnError(thread, e as string);
@@ -171,7 +171,7 @@ export class SyscallExecutor {
                 const originalPath: string = args[0];
                 const resolvedPath = this.resolvePath(thread.parent, originalPath);
                 try {
-                    const result = this.vfsManager.exists(resolvedPath);
+                    const result = this.vfsManager.exists(resolvedPath, process);
                     this.returnSuccess(thread, result);
                 } catch (e) {
                     this.returnError(thread, e as string);
@@ -184,7 +184,7 @@ export class SyscallExecutor {
                 const resolvedPath: string = this.resolvePath(thread.parent, originalPath);
 
                 try {
-                    this.vfsManager.makeDir(resolvedPath);
+                    this.vfsManager.makeDir(resolvedPath, process);
                     this.returnSuccess(thread);
                 } catch (e) {
                     this.returnError(thread, e as string);
@@ -197,7 +197,7 @@ export class SyscallExecutor {
                 const resolvedPath: string = this.resolvePath(thread.parent, originalPath);
 
                 try {
-                   const result = this.vfsManager.isDir(resolvedPath);
+                   const result = this.vfsManager.isDir(resolvedPath, process);
                    this.returnSuccess(thread, result);
                 } catch (e) {
                     this.returnError(thread, e as string);
@@ -212,7 +212,7 @@ export class SyscallExecutor {
                 const resolvedTo: string = this.resolvePath(thread.parent, originalTo);
 
                 try {
-                   this.vfsManager.move(resolvedFrom, resolvedTo);
+                   this.vfsManager.move(resolvedFrom, resolvedTo, process);
                    this.returnSuccess(thread);
                 } catch (e) {
                     this.returnError(thread, e as string);
@@ -227,7 +227,7 @@ export class SyscallExecutor {
                 const resolvedTo: string = this.resolvePath(thread.parent, originalTo);
 
                 try {
-                    this.vfsManager.copy(resolvedFrom, resolvedTo);
+                    this.vfsManager.copy(resolvedFrom, resolvedTo, process);
                     this.returnSuccess(thread);
                 } catch (e) {
                     this.returnError(thread, e as string);
@@ -240,7 +240,7 @@ export class SyscallExecutor {
                 const resolvedPath: string = this.resolvePath(thread.parent, originalPath);
 
                 try {
-                    this.vfsManager.delete(resolvedPath);
+                    this.vfsManager.delete(resolvedPath, process);
                     this.returnSuccess(thread);
                 } catch (e) {
                     this.returnError(thread, e as string);
@@ -253,7 +253,7 @@ export class SyscallExecutor {
                 const resolvedPath: string = this.resolvePath(thread.parent, originalPath);
 
                 try {
-                    const result: number = this.vfsManager.getSize(resolvedPath);
+                    const result: number = this.vfsManager.getSize(resolvedPath, process);
                     this.returnSuccess(thread, result);
                 } catch (e) {
                     this.returnError(thread, e as string);
@@ -266,7 +266,7 @@ export class SyscallExecutor {
                 const resolvedPath: string = this.resolvePath(thread.parent, originalPath);
 
                 try {
-                    const result: number = this.vfsManager.getCapacity(resolvedPath);
+                    const result: number = this.vfsManager.getCapacity(resolvedPath, process);
                     this.returnSuccess(thread, result);
                 } catch (e) {
                     this.returnError(thread, e as string);
@@ -279,7 +279,7 @@ export class SyscallExecutor {
                 const resolvedPath: string = this.resolvePath(thread.parent, originalPath);
 
                 try {
-                    const result: number = this.vfsManager.getFreeSpace(resolvedPath);
+                    const result: number = this.vfsManager.getFreeSpace(resolvedPath, process);
                     this.returnSuccess(thread, result);
                 } catch (e) {
                     this.returnError(thread, e as string);
@@ -292,7 +292,7 @@ export class SyscallExecutor {
                 const resolvedPath: string = this.resolvePath(thread.parent, originalPath);
 
                 try {
-                    const result: IFileMetadata = this.vfsManager.getMetadata(resolvedPath);
+                    const result: IFileMetadata = this.vfsManager.getMetadata(resolvedPath, process);
                     this.returnSuccess(thread, result);
                 } catch (e) {
                     this.returnError(thread, e as string);

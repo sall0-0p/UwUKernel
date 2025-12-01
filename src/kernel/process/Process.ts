@@ -38,6 +38,12 @@ export class Process {
     public workingDir: string;
     public rawInputMode: boolean = false;
 
+    // Identity
+    public uid: number = 0;
+    public gid: number = 0;
+    public euid: number = 0;
+    public groups: number[] = [];
+
     // Exiting and dying
     public state: ProcessState = ProcessState.Alive;
     public exitCode: number | undefined;

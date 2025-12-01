@@ -225,7 +225,8 @@ export namespace EnvironmentFactory {
 
                 isDir(path: string): void {
                     // @ts-ignore
-                    sys(Syscall.FsIsDir, self);
+                    const [result] = sys(Syscall.FsIsDir, self);
+                    return result;
                 },
 
                 move(from: string, to: string): void {

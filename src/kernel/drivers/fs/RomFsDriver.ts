@@ -84,6 +84,7 @@ export class RomFSDriver implements IFsDriver {
 
     public getMetadata(path: string): IFileMetadata {
         return {
+            type: fs.isDir(path) ? "d" : "f",
             owner: 0,
             group: 0,
             permissions: 0o0555,
@@ -94,6 +95,10 @@ export class RomFSDriver implements IFsDriver {
             isDirectory: fs.isDir(this.resolve(path)),
             size: fs.getSize(this.resolve(path))
         };
+    }
+
+    public setMetadata(path: string, metadata: IFileMetadata): void {
+        return;
     }
 
     public list(path: string): string[] {

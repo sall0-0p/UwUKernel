@@ -1,4 +1,5 @@
 export interface IFileMetadata {
+    type: "f" | "d" | "s" | "m",
     owner: number,
     group: number,
     permissions: number,

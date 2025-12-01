@@ -5,6 +5,7 @@ export enum FsOpenMode {
     Read = "r",
     Write = "w",
     Append = "a",
+    Execute = "x",
 }
 
 export interface IFsDriver {
@@ -18,6 +19,7 @@ export interface IFsDriver {
     move(from: string, to: string): void;
     copy(from: string, to: string): void
     getMetadata(path: string): IFileMetadata;
+    setMetadata(path: string, metadata: IFileMetadata): void;
     getSize(path: string): number;
     getCapacity(): number;
     getFreeSpace(): number;
