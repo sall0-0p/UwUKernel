@@ -96,6 +96,9 @@ export class SyscallExecutor {
                     const exists = this.vfsManager.exists(resolvedPath);
                     if (!exists) error("Directory does not exist!");
 
+                    const hasPermission = this.vfsManager.canAccessDirectory(resolvedPath, process);
+                    if (!hasPermission) error("No permission.");
+
                     thread.parent.workingDir = resolvedPath;
                     this.returnSuccess(thread);
                 } catch (e) {

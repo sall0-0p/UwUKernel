@@ -4,6 +4,7 @@ import {IFsStateStream} from "../../../vfs/IFsStateStream";
 import {RootFsStateStream} from "./RootFsStateStream";
 import {RootFsMetadataManager} from "./RootFsMetadataManager";
 import {Logger} from "../../../lib/Logger";
+import {Process} from "../../../process/Process";
 
 export class RootFsDriver implements IFsDriver {
     public readonly id: string = "rootFs";
@@ -19,11 +20,28 @@ export class RootFsDriver implements IFsDriver {
         return fs.exists(path);
     }
 
-    open(path: string, mode: FsOpenMode): IFsStateStream | undefined {
+    open(path: string, mode: FsOpenMode, process?: Process): IFsStateStream | undefined {
         path = "/" + fs.combine(this.physicalRoot, path);
+        const alreadyExists = fs.exists(path);
+
         // @ts-ignore
         const [handle] = fs.open(path, mode);
         if (handle) {
+            if (!alreadyExists && (mode === FsOpenMode.Write || mode === FsOpenMode.Append)) {
+                this.metadataManager.set(path, {
+                    type: "f",
+                    owner: process ? process.euid : 0,
+                    group: process ? process.gid : 0,
+                    permissions: 0o644, // Default file permissions
+                    created: os.epoch("utc"),
+                    modified: os.epoch("utc"),
+                    isDirectory: false,
+                    isSystem: false,
+                    isReadOnly: false,
+                    size: 0
+                });
+            }
+
             return new RootFsStateStream(path, handle, mode, this.metadataManager);
         } else {
             return undefined;

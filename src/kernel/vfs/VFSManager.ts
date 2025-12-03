@@ -60,20 +60,20 @@ export class VFSManager {
     }
 
     public open(path: string, mode: FsOpenMode, process?: Process): FileHandle {
-        print("HALLO!")
         const resolved = this.resolve(path);
         if (!resolved) error("Unable to resolve path: are you sure it is correct?");
 
-        // print("1");
-        // if (process && !this.checkTraversalPermissions(path, process)) error("No permissions.");
-        // print("2");
-        // if (process && !this.checkPermissions(this.getMetadata("/" + fs.getDir(path)), mode, process)) error("No permissions.");
-        // print("3");
         if (process && !this.checkTraversalPermissions(path, process)) error("No permissions.");
         if (mode === "r") {
             if (process && !this.checkPermissions(this.getMetadata(path), FsOpenMode.Read, process)) error("No permissions.");
         } else if (mode === "w" || mode === "a") {
-            if (process && !this.checkPermissions(this.getMetadata("/" + fs.getDir(path)), FsOpenMode.Write, process)) error("No permissions.");
+            if (!this.exists(path)) {
+                // If file does not exist, we want to create it, so check parent dir write permissions
+                if (process && !this.checkPermissions(this.getMetadata("/" + fs.getDir(path)), FsOpenMode.Write, process)) error("No permissions.");
+            } else {
+                // Otherwise, check file write permissions.
+                if (process && !this.checkPermissions(this.getMetadata(path), FsOpenMode.Write, process)) error("No permissions.");
+            }
         } else if (mode === "x") {
             if (process && !this.checkPermissions(this.getMetadata(path), FsOpenMode.Execute, process)) error("No permissions.");
         }
