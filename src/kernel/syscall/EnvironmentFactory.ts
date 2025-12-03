@@ -91,6 +91,36 @@ export namespace EnvironmentFactory {
                     return time;
                 },
 
+                getUid(): number {
+                    const [uid] = sys(Syscall.GetUid);
+                    return uid;
+                },
+
+                getGid(): number {
+                    const [gid] = sys(Syscall.GetGid);
+                    return gid;
+                },
+
+                getGroups(): number[] {
+                    const [groups] = sys(Syscall.GetGroups);
+                    return groups;
+                },
+
+                setUid(uid: number) {
+                    // @ts-ignore
+                    sys(Syscall.SetUid, self);
+                },
+
+                setGid(gid: number[]) {
+                    // @ts-ignore
+                    sys(Syscall.SetGid, self);
+                },
+
+                setGroups(groups: number[]) {
+                    // @ts-ignore
+                    sys(Syscall.SetGroups, self);
+                },
+
                 /**
                  * Returns current working directory.
                  */

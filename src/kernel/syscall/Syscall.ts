@@ -7,6 +7,12 @@ export enum Syscall {
 
     // My os syscalls
     GetPid = "os.getPid",
+    GetUid = "os.getUid",
+    GetGid = "os.getGid",
+    GetGroups = "os.getGroups",
+    SetUid = "os.setUid",
+    SetGid = "os.setGid",
+    SetGroups = "os.setGroups",
     GetProcessTime = "os.getProcessTime",
     GetCWD = "os.getWorkingDirectory",
     SetCWD = "os.setWorkingDirectory",
@@ -32,7 +38,6 @@ export enum Syscall {
     FsSize = "fs.getSize",
     FsGetCapacity = "fs.getCapacity",
     FsGetFreeSpace = "fs.getFreeSpace",
-
 
     // Stdin
     rHandleIsEmpty = "handle.isEmpty",

@@ -79,6 +79,58 @@ export class SyscallExecutor {
                 break;
             }
 
+            case Syscall.GetUid: {
+                this.returnSuccess(thread, process.uid);
+                break;
+            }
+
+            case Syscall.GetGid: {
+                this.returnSuccess(thread, process.gid);
+                break;
+            }
+
+            case Syscall.GetGroups: {
+                this.returnSuccess(thread, process.groups.slice());
+                break;
+            }
+
+            case Syscall.SetUid: {
+                const uid = args[0];
+                if (process.euid === 0) {
+                    process.uid = uid;
+                    process.euid = uid;
+                    this.returnSuccess(thread, process.uid);
+                } else {
+                    this.returnError(thread, "No permissions.")
+                }
+
+                break;
+            }
+
+            case Syscall.SetGid: {
+                const gid = args[0];
+                if (process.euid === 0) {
+                    process.gid = gid;
+                    this.returnSuccess(thread, process.uid);
+                } else {
+                    this.returnError(thread, "No permissions.")
+                }
+
+                break;
+            }
+
+            case Syscall.SetGroups: {
+                const groups = args[0];
+                if (process.euid === 0) {
+                    process.groups = groups.slice();
+                    this.returnSuccess(thread, process.uid);
+                } else {
+                    this.returnError(thread, "No permissions.")
+                }
+
+                break;
+            }
+
             case Syscall.GetProcessTime: {
                 this.returnSuccess(thread, process.cpuTime, process.sysTime);
                 break;
