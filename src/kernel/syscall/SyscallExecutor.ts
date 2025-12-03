@@ -59,7 +59,7 @@ export class SyscallExecutor {
             case Syscall.PullEvent: {
                 const filter: EventType[] = args[0];
                 const timeout: number = args[1] * 1000;
-                thread.parent.pullEvent(thread, filter, timeout);
+                process.pullEvent(thread, filter, timeout);
                 break;
             }
             case Syscall.Epoch: {
@@ -75,23 +75,23 @@ export class SyscallExecutor {
 
             // OS syscalls
             case Syscall.GetPid: {
-                this.returnSuccess(thread, thread.parent.pid);
+                this.returnSuccess(thread, process.pid);
                 break;
             }
 
             case Syscall.GetProcessTime: {
-                this.returnSuccess(thread, thread.parent.cpuTime, thread.parent.sysTime);
+                this.returnSuccess(thread, process.cpuTime, process.sysTime);
                 break;
             }
 
             case Syscall.GetCWD: {
-                this.returnSuccess(thread, thread.parent.workingDir);
+                this.returnSuccess(thread, process.workingDir);
                 break;
             }
 
             case Syscall.SetCWD: {
                 const originalPath: string = args[0];
-                const resolvedPath = this.resolvePath(thread.parent, originalPath);
+                const resolvedPath = this.resolvePath(process, originalPath);
                 try {
                     const exists = this.vfsManager.exists(resolvedPath);
                     if (!exists) error("Directory does not exist!");
@@ -99,7 +99,7 @@ export class SyscallExecutor {
                     const hasPermission = this.vfsManager.canAccessDirectory(resolvedPath, process);
                     if (!hasPermission) error("No permission.");
 
-                    thread.parent.workingDir = resolvedPath;
+                    process.workingDir = resolvedPath;
                     this.returnSuccess(thread);
                 } catch (e) {
                     this.returnError(thread, e as string);
@@ -109,14 +109,14 @@ export class SyscallExecutor {
             }
 
             case Syscall.SetForegroundProcess: {
-                this.eventManager.setFocusedProcess(thread.parent);
+                this.eventManager.setFocusedProcess(process);
                 this.returnSuccess(thread);
                 break;
             }
 
             case Syscall.SetRawInputMode: {
                 const toggle: boolean = args[0];
-                thread.parent.rawInputMode = toggle;
+                process.rawInputMode = toggle;
                 this.returnSuccess(thread);
                 break;
             }
@@ -125,7 +125,7 @@ export class SyscallExecutor {
                 const code: number = args.length > 0 ? args[0] : 0;
                 const reason: string | undefined = args.length > 1 ? args[1] : undefined;
 
-                this.processManager.exitProcess(thread.parent.pid, code, reason);
+                this.processManager.exitProcess(process.pid, code, reason);
                 break;
             }
 
@@ -139,7 +139,7 @@ export class SyscallExecutor {
             case Syscall.FsOpen: {
                 const originalPath: string = args[0];
                 const mode: string = args[1];
-                const resolvedPath = this.resolvePath(thread.parent, originalPath);
+                const resolvedPath = this.resolvePath(process, originalPath);
 
                 if (!["r", "w", "a"].includes(mode)) {
                     this.returnError(thread, "Invalid fs.open() mode.");
@@ -148,7 +148,7 @@ export class SyscallExecutor {
 
                 try {
                     const result = this.vfsManager.open(resolvedPath, mode as FsOpenMode, process);
-                    const handleId = thread.parent.addHandle(result);
+                    const handleId = process.addHandle(result);
                     this.returnSuccess(thread, handleId);
                 } catch (e) {
                     this.returnError(thread, e as string);
@@ -159,7 +159,7 @@ export class SyscallExecutor {
 
             case Syscall.FsList: {
                 const originalPath: string = args[0];
-                const resolvedPath = this.resolvePath(thread.parent, originalPath);
+                const resolvedPath = this.resolvePath(process, originalPath);
 
                 try {
                     const result = this.vfsManager.list(resolvedPath, process);
@@ -172,7 +172,7 @@ export class SyscallExecutor {
 
             case Syscall.FsExists: {
                 const originalPath: string = args[0];
-                const resolvedPath = this.resolvePath(thread.parent, originalPath);
+                const resolvedPath = this.resolvePath(process, originalPath);
                 try {
                     const result = this.vfsManager.exists(resolvedPath, process);
                     this.returnSuccess(thread, result);
@@ -184,7 +184,7 @@ export class SyscallExecutor {
 
             case Syscall.FsMakeDir: {
                 const originalPath: string = args[0];
-                const resolvedPath: string = this.resolvePath(thread.parent, originalPath);
+                const resolvedPath: string = this.resolvePath(process, originalPath);
 
                 try {
                     this.vfsManager.makeDir(resolvedPath, process);
@@ -197,7 +197,7 @@ export class SyscallExecutor {
 
             case Syscall.FsIsDir: {
                 const originalPath: string = args[0];
-                const resolvedPath: string = this.resolvePath(thread.parent, originalPath);
+                const resolvedPath: string = this.resolvePath(process, originalPath);
 
                 try {
                    const result = this.vfsManager.isDir(resolvedPath, process);
@@ -210,9 +210,9 @@ export class SyscallExecutor {
 
             case Syscall.FsMove: {
                 const originalFrom: string = args[0];
-                const resolvedFrom: string = this.resolvePath(thread.parent, originalFrom);
+                const resolvedFrom: string = this.resolvePath(process, originalFrom);
                 const originalTo: string = args[1];
-                const resolvedTo: string = this.resolvePath(thread.parent, originalTo);
+                const resolvedTo: string = this.resolvePath(process, originalTo);
 
                 try {
                    this.vfsManager.move(resolvedFrom, resolvedTo, process);
@@ -225,9 +225,9 @@ export class SyscallExecutor {
 
             case Syscall.FsCopy: {
                 const originalFrom: string = args[0];
-                const resolvedFrom: string = this.resolvePath(thread.parent, originalFrom);
+                const resolvedFrom: string = this.resolvePath(process, originalFrom);
                 const originalTo: string = args[1];
-                const resolvedTo: string = this.resolvePath(thread.parent, originalTo);
+                const resolvedTo: string = this.resolvePath(process, originalTo);
 
                 try {
                     this.vfsManager.copy(resolvedFrom, resolvedTo, process);
@@ -240,7 +240,7 @@ export class SyscallExecutor {
 
             case Syscall.FsDelete: {
                 const originalPath: string = args[0];
-                const resolvedPath: string = this.resolvePath(thread.parent, originalPath);
+                const resolvedPath: string = this.resolvePath(process, originalPath);
 
                 try {
                     this.vfsManager.delete(resolvedPath, process);
@@ -253,7 +253,7 @@ export class SyscallExecutor {
 
             case Syscall.FsSize: {
                 const originalPath: string = args[0];
-                const resolvedPath: string = this.resolvePath(thread.parent, originalPath);
+                const resolvedPath: string = this.resolvePath(process, originalPath);
 
                 try {
                     const result: number = this.vfsManager.getSize(resolvedPath, process);
@@ -266,7 +266,7 @@ export class SyscallExecutor {
 
             case Syscall.FsGetCapacity: {
                 const originalPath: string = args[0];
-                const resolvedPath: string = this.resolvePath(thread.parent, originalPath);
+                const resolvedPath: string = this.resolvePath(process, originalPath);
 
                 try {
                     const result: number = this.vfsManager.getCapacity(resolvedPath, process);
@@ -279,7 +279,7 @@ export class SyscallExecutor {
 
             case Syscall.FsGetFreeSpace: {
                 const originalPath: string = args[0];
-                const resolvedPath: string = this.resolvePath(thread.parent, originalPath);
+                const resolvedPath: string = this.resolvePath(process, originalPath);
 
                 try {
                     const result: number = this.vfsManager.getFreeSpace(resolvedPath, process);
@@ -292,7 +292,7 @@ export class SyscallExecutor {
 
             case Syscall.FsGetMetadata: {
                 const originalPath: string = args[0];
-                const resolvedPath: string = this.resolvePath(thread.parent, originalPath);
+                const resolvedPath: string = this.resolvePath(process, originalPath);
 
                 try {
                     const result: IFileMetadata = this.vfsManager.getMetadata(resolvedPath, process);
@@ -300,6 +300,36 @@ export class SyscallExecutor {
                 } catch (e) {
                     this.returnError(thread, e as string);
                 }
+                break;
+            }
+
+            case Syscall.FsChmod: {
+                const originalPath: string = args[0];
+                const resolvedPath: string = this.resolvePath(process, originalPath);
+                const permissionNumber: number = args[1];
+
+                try {
+                    this.vfsManager.chmod(resolvedPath, permissionNumber, process);
+                    this.returnSuccess(thread);
+                } catch (e) {
+                    this.returnError(thread, e as string);
+                }
+                break;
+            }
+
+            case Syscall.FsChown: {
+                const originalPath: string = args[0];
+                const resolvedPath: string = this.resolvePath(process, originalPath);
+                const uid: number = args[1];
+                const gid: number = args[2];
+
+                try {
+                    this.vfsManager.chown(resolvedPath, uid, gid, process);
+                    this.returnSuccess(thread);
+                } catch (e) {
+                    this.returnError(thread, e as string);
+                }
+
                 break;
             }
 
@@ -399,12 +429,12 @@ export class SyscallExecutor {
                 } else {
                     this.returnError(thread, "invalid argument #0: bad file descriptor");
                 }
-                thread.parent.removeHandle(handleId);
+                process.removeHandle(handleId);
                 break;
             }
         }
         const finishedTime = os.epoch("utc");
         const syscallTime = finishedTime - startedTime;
-        thread.parent.sysTime += syscallTime;
+        process.sysTime += syscallTime;
     }
 }

@@ -20,7 +20,7 @@ export interface IFsDriver {
     move(from: string, to: string): void;
     copy(from: string, to: string): void
     getMetadata(path: string): IFileMetadata;
-    setMetadata(path: string, metadata: IFileMetadata): void;
+    setMetadata(path: string, metadata: Partial<IFileMetadata>): void;
     getSize(path: string): number;
     getCapacity(): number;
     getFreeSpace(): number;

@@ -256,6 +256,30 @@ export class VFSManager {
         }
     }
 
+    public chmod(path: string, octalPerms: number, process?: Process): void {
+        const resolved = this.resolve(path);
+        if (resolved === undefined) error("Failed to resolve path!");
+
+        resolved.driver.setMetadata(resolved.relativePath, {
+            permissions: octalPerms,
+        })
+    }
+
+    public chown(path: string, uid: number, gid: number, process?: Process) {
+        const resolved = this.resolve(path);
+        if (resolved === undefined) error("Failed to resolve path!");
+
+        if (process && !this.checkPermissions(this.getMetadata(path), FsOpenMode.Write, process)) error("No permissions!");
+
+        if (uid >= 0) {
+            resolved.driver.setMetadata(resolved.relativePath, { owner: uid })
+        }
+
+        if (gid >= 0) {
+            resolved.driver.setMetadata(resolved.relativePath, { group: gid })
+        }
+    }
+
     private manualCopy(srcDriver: IFsDriver, srcPath: string, destDriver: IFsDriver, destPath: string): void {
         const sourceStream: IFsStateStream | undefined = srcDriver.open(srcPath, FsOpenMode.Read);
         if (!sourceStream) error("Could not open source file");

@@ -24,6 +24,8 @@ export enum Syscall {
     FsDelete = "fs.delete",
     FsMove = "fs.move",
     FsCopy = "fs.copy",
+    FsChmod = "fs.chmod",
+    FsChown = "fs.chown",
 
     FsIsDir = "fs.isDir",
     FsGetMetadata = "fs.getMetadata",

@@ -17,12 +17,15 @@ export class RootFsDriver implements IFsDriver {
 
     exists(path: string): boolean {
         path = "/" + fs.combine(this.physicalRoot, path);
+        if (path.endsWith(".fs_meta")) return false;
         return fs.exists(path);
     }
 
     open(path: string, mode: FsOpenMode, process?: Process): IFsStateStream | undefined {
         path = "/" + fs.combine(this.physicalRoot, path);
         const alreadyExists = fs.exists(path);
+
+        if (path.endsWith(".fs_meta")) error("Cannot open .fs_meta, its a metadata file.");
 
         // @ts-ignore
         const [handle] = fs.open(path, mode);
@@ -50,17 +53,21 @@ export class RootFsDriver implements IFsDriver {
 
     list(path: string): string[] {
         path = "/" + fs.combine(this.physicalRoot, path);
-        return fs.list(path);
+        const list = fs.list(path);
+        return list.filter((item) => item !== ".fs_meta");
     }
 
     mkdir(path: string): void {
         path = "/" + fs.combine(this.physicalRoot, path);
+        if (path.endsWith(".fs_meta")) error("Cannot overwrite .fs_meta");
         fs.makeDir(path);
     }
 
     move(from: string, to: string): void {
         from = "/" + fs.combine(this.physicalRoot, from);
         to = "/" + fs.combine(this.physicalRoot, to);
+        if (from.endsWith(".fs_meta")) error("Cannot move .fs_meta");
+        if (to.endsWith(".fs_meta")) error("Cannot overwrite .fs_meta");
         fs.move(from, to);
         this.metadataManager.move(from, to);
     }
@@ -68,12 +75,15 @@ export class RootFsDriver implements IFsDriver {
     copy(from: string, to: string): void {
         from = "/" + fs.combine(this.physicalRoot, from);
         to = "/" + fs.combine(this.physicalRoot, to);
+        if (from.endsWith(".fs_meta")) error("Cannot read .fs_meta");
+        if (to.endsWith(".fs_meta")) error("Cannot overwrite .fs_meta");
         fs.copy(from, to);
         this.metadataManager.copy(from, to);
     }
 
     delete(path: string): void {
         path = "/" + fs.combine(this.physicalRoot, path);
+        if (path.endsWith(".fs_meta")) error("Cannot delete .fs_meta");
         fs.delete(path);
         this.metadataManager.delete(path);
     }
@@ -88,16 +98,14 @@ export class RootFsDriver implements IFsDriver {
 
     getMetadata(path: string): IFileMetadata {
         path = "/" + fs.combine(this.physicalRoot, path);
+        if (path.endsWith(".fs_meta")) error("Cannot get metadata for .fs_meta, its a metadata file.");
         return this.metadataManager.get(path);
     }
 
-    setMetadata(path: string, metadata: IFileMetadata): void {
+    setMetadata(path: string, metadata: Partial<IFileMetadata>): void {
         path = "/" + fs.combine(this.physicalRoot, path);
-        Logger.info(path);
-        Logger.info(textutils.serialize(metadata));
-        Logger.info(debug.traceback());
-        const result = this.metadataManager.set(path, metadata);
-        Logger.info(`${result}`);
+        if (path.endsWith(".fs_meta")) error("Cannot set metadata for .fs_meta, its a metadata file.");
+        this.metadataManager.edit(path, metadata);
     }
 
     getSize(path: string): number {

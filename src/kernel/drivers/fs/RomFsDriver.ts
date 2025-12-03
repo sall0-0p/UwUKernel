@@ -97,7 +97,7 @@ export class RomFSDriver implements IFsDriver {
         };
     }
 
-    public setMetadata(path: string, metadata: IFileMetadata): void {
+    public setMetadata(path: string, metadata: Partial<IFileMetadata>): void {
         return;
     }
 

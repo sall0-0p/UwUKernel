@@ -266,7 +266,22 @@ export namespace EnvironmentFactory {
                     // @ts-ignore
                     const [result] = sys(Syscall.FsGetMetadata, self);
                     return result;
-                }
+                },
+
+                setPermissions(path: string, permissions: number) {
+                    // @ts-ignore
+                    sys(Syscall.FsChmod, self, path);
+                },
+
+                setOwner(path: string, uid: number) {
+                    // @ts-ignore
+                    sys(Syscall.FsChown, self, path, -1);
+                },
+
+                setGroup(path: string, gid: number) {
+                    // @ts-ignore
+                    sys(Syscall.FsChown, self, -1, path);
+                },
             },
 
             stdin: {

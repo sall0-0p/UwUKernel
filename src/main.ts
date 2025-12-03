@@ -161,8 +161,15 @@ const codeVfsTest =
     "end; " +
 
     // 8. Metadata
-    "local metadata = fs.getMetadata('/testing_zone/moved.txt');" +
-    "print(metadata.owner, metadata.permissions, metadata.modified, metadata.size);" +
+    "local metadata = fs.getMetadata('/testing_zone/moved.txt'); " +
+    "print(metadata.owner, metadata.group, metadata.permissions, metadata.modified, metadata.size);" +
+
+    // 9. Setting permissions
+    "fs.setPermissions('/testing_zone/moved.txt', 484); " +
+    "fs.setOwner('/testing_zone/moved.txt', 1000); " +
+    "fs.setGroup('/testing_zone/moved.txt', 1000); " +
+    "local metadataNew = fs.getMetadata('/testing_zone/moved.txt'); " +
+    "print(metadataNew.owner, metadataNew.group, metadataNew.permissions, metadataNew.modified, metadataNew.size); " +
 
     // Cleanup
     "print('[Cleanup] Deleting /testing_zone...'); " +
