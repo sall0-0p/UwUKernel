@@ -1,4 +1,4 @@
-import {Process, ProcessDetails} from "../process/Process";
+import {HandleId, Process, ProcessDetails} from "../process/Process";
 import {Syscall} from "./Syscall";
 import {IEvent} from "../event/Event";
 
@@ -195,6 +195,23 @@ export namespace EnvironmentFactory {
                     // @ts-ignore
                     const [processDetails] = sys(Syscall.GetProcessDetails, self);
                     return processDetails
+                },
+
+                createProcess(path: string, name: string, args?: any[], env?: Map<string, any>, cwd?: string, stdio?: Map<number, number>): number {
+                    // @ts-ignore
+                    const [pid] = sys(Syscall.CreateProcess, self, path, name, args, env, cwd);
+                    return pid;
+                },
+
+                createThread(func: () => any, args?: any[]): number {
+                    // @ts-ignore
+                    const [tid] = sys(Syscall.CreateThread, self, func);
+                    return tid;
+                },
+
+                waitForThread(tid: number) {
+                    // @ts-ignore
+                    sys(Syscall.WaitForThread, self);
                 }
             },
 

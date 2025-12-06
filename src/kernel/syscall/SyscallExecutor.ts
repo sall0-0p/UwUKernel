@@ -208,6 +208,56 @@ export class SyscallExecutor {
                 break;
             }
 
+            case Syscall.CreateProcess: {
+                const path: string = args[0];
+                const name: string = args[1];
+                const execArgs: any[] = args[2];
+                const env: Map<string, any> = args[3] || process.environmentVariables;
+                const cwd: string = args[4] || process.workingDir;
+                const stdio: Map<number, HandleId> = args[5];
+
+                if (!path) {
+                    this.returnError(thread, "Path has to be specified!");
+                    break;
+                }
+
+                const resolvedPath = this.resolvePath(process, path)
+                if (!resolvedPath || !this.vfsManager.exists(resolvedPath)) {
+                    this.returnError(thread, "Invalid path!");
+                    break;
+                }
+
+                const code = this.vfsManager.open(resolvedPath, FsOpenMode.Execute, process).readAll(thread);
+                if (!code) {
+                    this.returnError(thread, "Failed to load file!");
+                    break;
+                }
+
+                const newProcess = this.processManager.createProcess(cwd, name, code, process, execArgs, env, stdio);
+                this.returnSuccess(thread, newProcess.pid);
+
+                break;
+            }
+
+            case Syscall.CreateThread: {
+                const func = args[0];
+                const execArgs = args[1];
+
+                if (!func || typeof func !== "function") {
+                    this.returnError(thread, "Expected function as first argument!");
+                    break;
+                }
+
+                const newThread = this.processManager.createThread(func, process, execArgs);
+                this.returnSuccess(thread, newThread.tid);
+
+                break;
+            }
+
+            case Syscall.JoinThread: {
+
+            }
+
             // Filesystem
             case Syscall.FsOpen: {
                 const originalPath: string = args[0];

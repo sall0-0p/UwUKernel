@@ -31,10 +31,12 @@ export class Process {
     public readonly parent: Process | undefined;
     public readonly threads: Map<TID, Thread> = new Map();
     public readonly eventQueue: EncasedEvent[] = [];
+    public readonly name: string;
     public mainThread!: Thread;
 
     private handles: Map<HandleId, IHandle> = new Map();
     public environment: object | undefined;
+    public environmentVariables: Map<string, any>;
     public workingDir: string;
     public rawInputMode: boolean = false;
 
@@ -55,9 +57,17 @@ export class Process {
 
     private activeInterceptors: IProcessInterceptor[] = [];
 
-    public constructor(private scheduler: Scheduler, workingDir: string, public readonly name: string, parent?: Process, handleOverrides?: Map<number, IHandle>) {
+    public constructor(
+        private scheduler: Scheduler,
+        workingDir: string,
+        name: string,
+        parent?: Process,
+        environmentVariables?: Map<string, any>,
+        handleOverrides?: Map<number, IHandle>
+    ) {
         this.workingDir = workingDir;
         this.parent = parent || undefined;
+        this.name = name;
 
         // Attach appropriate handles;
         if (this.parent) {
@@ -68,6 +78,12 @@ export class Process {
             if (pStdin) this.setHandle(pStdin, 0);
             if (pStdout) this.setHandle(pStdout, 1);
             if (pStderr) this.setHandle(pStderr, 2);
+        }
+
+        if (environmentVariables) {
+            this.environmentVariables = environmentVariables;
+        } else {
+            this.environmentVariables = new Map<string, any>();
         }
 
         handleOverrides?.forEach((h, id) => {

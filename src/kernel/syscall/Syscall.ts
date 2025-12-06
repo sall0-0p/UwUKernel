@@ -25,6 +25,10 @@ export enum Syscall {
     GetProcessList = "os.getProcessList",
     GetProcessDetails = "os.getProcessDetails",
 
+    CreateProcess = "os.createProcess",
+    CreateThread = "os.createThread",
+    JoinThread = "os.joinThread",
+
     // My fs syscalls
     FsExists = "fs.exists",
     FsOpen = "fs.open",

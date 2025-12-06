@@ -1,7 +1,8 @@
-import {PID, Process, ProcessDetails, ProcessState} from "./Process";
+import {HandleId, PID, Process, ProcessDetails, ProcessState} from "./Process";
 import {Thread} from "./Thread";
 import {EnvironmentFactory} from "../syscall/EnvironmentFactory";
 import {Scheduler} from "./Scheduler";
+import {IHandle} from "../handle/IHandle";
 
 export class ProcessManager {
     public readonly processes: Map<PID, Process> = new Map();
@@ -15,13 +16,23 @@ export class ProcessManager {
      * @param cwd current working directory, process is created in.
      * @param name name of the current process (human readable)
      * @param code code to execute.
+     * @param args arguments to pass to the function.
+     * @param env environment variables of the process.
      * @param parent parent process (can be nill).
      */
-    public createProcess(cwd: string, name: string, code: string, parent?: Process): Process {
-        const newProcess = new Process(this.scheduler, cwd, name, parent);
+    public createProcess(cwd: string, name: string, code: string, parent?: Process, args?: any[], env?: Map<string, any>, handleOverrides?: Map<number, number>): Process {
+        const handles = new Map<number, IHandle>;
+        if (parent && handleOverrides) {
+            handleOverrides.forEach((v, k) => {
+                const handle = parent.getHandle(v);
+                if (handle) handles.set(k, handle);
+            })
+        }
+
+        const newProcess = new Process(this.scheduler, cwd, name, parent, env, handles);
         newProcess.environment = EnvironmentFactory.getEnvironment(newProcess);
 
-        const mainThread = new Thread(newProcess, code);
+        const mainThread = new Thread(newProcess, code, args);
         newProcess.addThread(mainThread);
 
         this.processes.set(newProcess.pid, newProcess);
@@ -32,11 +43,12 @@ export class ProcessManager {
 
     /**
      * Creates a new thread inside a process. It shares the environment with it.
-     * @param code code to be executed.
+     * @param func function to be executed.
      * @param parent parent process thread will be attached to.
+     * @param args arguments to run function with.
      */
-    public createThread(code: string, parent: Process): Thread {
-        const newThread = new Thread(parent, code);
+    public createThread(func: () => any, parent: Process, args?: any[]): Thread {
+        const newThread = new Thread(parent, func, args);
         parent.addThread(newThread);
 
         this.scheduler.addThread(newThread);

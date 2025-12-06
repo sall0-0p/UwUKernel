@@ -49,23 +49,37 @@ export class Thread {
     /**
      * Creates new thread object.
      * @param parent process thread belongs to.
-     * @param code code to be executed by a thread.
+     * @param instructions code or function to be executed by a thread.
+     * @param args arguments to pass to the function.
      */
-    constructor(parent: Process, code: string) {
+    constructor(parent: Process, instructions: (() => any) | string, args?: any[]) {
         this.parent = parent;
 
-        const [executable, err] = loadstring(code);
-        if (!executable) {
-            Logger.error("Failed to parse code for thread %s", this.tid);
-            Logger.error("Message: %s", err);
-            this.thread = coroutine.create(() => {});
-            this.state = ThreadState.Terminated;
-            return;
+        let executable: (() => any) | undefined;
+        let err: any;
+        if (typeof instructions === "string") {
+            [executable, err] = loadstring(instructions);
+            if (!executable) {
+                Logger.error("Failed to parse code for thread %s", this.tid);
+                Logger.error("Message: %s", err);
+                this.thread = coroutine.create(() => {});
+                this.state = ThreadState.Terminated;
+                return;
+            }
+        } else {
+            executable = instructions;
         }
 
         setfenv(executable, parent.environment || {});
-        this.thread = coroutine.create(executable);
+        this.thread = coroutine.create(() => {
+            // Weird ts bullshit.
+            executable!();
+        });
         this.state = ThreadState.Ready;
+
+        if (args) {
+            this.nextRunArguments = args;
+        }
     }
 
     public isEventInFilter(event: IEvent) {
