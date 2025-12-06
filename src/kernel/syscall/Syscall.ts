@@ -22,6 +22,9 @@ export enum Syscall {
     SetForegroundProcess = "os.setForegroundProcess",
     SetRawInputMode = "os.setRawInputMode",
 
+    GetProcessList = "os.getProcessList",
+    GetProcessDetails = "os.getProcessDetails",
+
     // My fs syscalls
     FsExists = "fs.exists",
     FsOpen = "fs.open",

@@ -4,6 +4,7 @@ export enum EventType {
     Char = "char",
     ScreenResize = "screen_resize",
     Timer = "timer",
+    RemoteEvent = "remote_event",
 }
 
 export enum RoutingType {
@@ -12,6 +13,7 @@ export enum RoutingType {
 
     // Automatic
     Timer = "timer",
+    Remote = "remote",
 }
 
 export interface IEvent {

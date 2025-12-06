@@ -1,4 +1,4 @@
-import {PID, Process, ProcessState} from "./Process";
+import {PID, Process, ProcessDetails, ProcessState} from "./Process";
 import {Thread} from "./Thread";
 import {EnvironmentFactory} from "../syscall/EnvironmentFactory";
 import {Scheduler} from "./Scheduler";
@@ -13,11 +13,12 @@ export class ProcessManager {
     /**
      * Creates new process and assigns it to scheduler. Creates a main thread of the process.
      * @param cwd current working directory, process is created in.
+     * @param name name of the current process (human readable)
      * @param code code to execute.
      * @param parent parent process (can be nill).
      */
-    public createProcess(cwd: string, code: string, parent?: Process): Process {
-        const newProcess = new Process(this.scheduler, cwd, parent);
+    public createProcess(cwd: string, name: string, code: string, parent?: Process): Process {
+        const newProcess = new Process(this.scheduler, cwd, name, parent);
         newProcess.environment = EnvironmentFactory.getEnvironment(newProcess);
 
         const mainThread = new Thread(newProcess, code);
@@ -112,6 +113,28 @@ export class ProcessManager {
      */
     public getProcessByPID(pid: PID): Process | undefined {
         return this.processes.get(pid);
+    }
+
+    /**
+     * Returns process details
+     * @param process - process to get details for
+     */
+    public getProcessDetails(process: Process): ProcessDetails {
+        return {
+            pid: process.pid,
+            ppid: process.parent?.pid || -1,
+            uid: process.uid,
+            gid: process.gid,
+
+            state: process.state,
+            name: process.name,
+            cwd: process.workingDir,
+            cpuTime: process.cpuTime,
+            sysTime: process.sysTime,
+
+            threads: process.threads.size,
+            handles: process.countHandles(),
+        }
     }
 
     // Remove process completely from the system.

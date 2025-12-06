@@ -177,7 +177,7 @@ const codeVfsTest =
     "if not fs.exists('/testing_zone') then print('PASS: Cleanup successful'); else print('FAIL: Cleanup failed'); end; " +
 
     "print('=== VFS TEST COMPLETE ==='); ";
-const process10 = pm.createProcess("/", codeVfsTest);
+const process10 = pm.createProcess("/", "VFS Test", codeVfsTest);
 
 const parentCode = `
     local myPid = os.getPid()
@@ -204,5 +204,13 @@ const childCode = `
 `;
 // const childProcess = pm.createProcess("/", childCode, parentProcess);
 // print("Child", childProcess.pid);
+
+// const processTest = `
+//     local processList = os.getProcessList();
+//     print(unpack(processList));
+//     local processDetails = os.getProcessDetails(1);
+//     print(processDetails.name);
+// `
+// const processLast = pm.createProcess("/", "Last process", processTest);
 
 scheduler.run();

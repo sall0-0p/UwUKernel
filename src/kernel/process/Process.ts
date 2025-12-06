@@ -55,7 +55,7 @@ export class Process {
 
     private activeInterceptors: IProcessInterceptor[] = [];
 
-    public constructor(private scheduler: Scheduler, workingDir: string, parent?: Process, handleOverrides?: Map<number, IHandle>) {
+    public constructor(private scheduler: Scheduler, workingDir: string, public readonly name: string, parent?: Process, handleOverrides?: Map<number, IHandle>) {
         this.workingDir = workingDir;
         this.parent = parent || undefined;
 
@@ -125,6 +125,10 @@ export class Process {
     public removeHandle(handleId: HandleId): void {
         this.handles.get(handleId)?.onRemoved?.(this, handleId);
         this.handles.delete(handleId);
+    }
+
+    public countHandles(): number {
+        return this.handles.size;
     }
 
     public queueEvent(event: IEvent) {
@@ -215,6 +219,22 @@ export class Process {
 
         this.handles.clear();
     }
+}
+
+export interface ProcessDetails {
+    pid: number,
+    ppid: number, // -1 if undefined
+    uid: number,
+    gid: number,
+
+    state: "alive" | "zombie" | "dead",
+    name: string,
+    cwd: string,
+
+    cpuTime: number,
+    sysTime: number,
+    threads: number,
+    handles: number,
 }
 
 namespace PIDCounter {

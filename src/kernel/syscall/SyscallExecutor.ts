@@ -187,6 +187,27 @@ export class SyscallExecutor {
                 break;
             }
 
+            case Syscall.GetProcessList: {
+                const processList = this.processManager.getAllProcesses();
+                const pids = processList.map((p) => p.pid);
+                this.returnSuccess(thread, pids);
+                break;
+            }
+
+            case Syscall.GetProcessDetails: {
+                const pid = args[0];
+                const process = this.processManager.getProcessByPID(pid);
+                if (!process) {
+                    this.returnError(thread, "Process does not exist!");
+                    break;
+                }
+
+                const details = this.processManager.getProcessDetails(process);
+                this.returnSuccess(thread, details);
+
+                break;
+            }
+
             // Filesystem
             case Syscall.FsOpen: {
                 const originalPath: string = args[0];

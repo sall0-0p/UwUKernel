@@ -1,4 +1,4 @@
-import {Process} from "../process/Process";
+import {Process, ProcessDetails} from "../process/Process";
 import {Syscall} from "./Syscall";
 import {IEvent} from "../event/Event";
 
@@ -184,6 +184,17 @@ export namespace EnvironmentFactory {
                     // @ts-ignore
                     const [returnedPid, code, reason] = sys(Syscall.WaitForChildExit, self);
                     return $multi(returnedPid, code, reason);
+                },
+
+                getProcessList(): number[] {
+                    const [processList] = sys(Syscall.GetProcessList);
+                    return processList;
+                },
+
+                getProcessDetails(pid: number): ProcessDetails {
+                    // @ts-ignore
+                    const [processDetails] = sys(Syscall.GetProcessDetails, self);
+                    return processDetails
                 }
             },
 
