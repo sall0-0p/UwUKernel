@@ -13,8 +13,6 @@
         "luaTarget": "CC-5.2",
         "luaLibImport": "inline",
         "noImplicitSelf": true,
-//        "luaBundle": "bundle.lua",
-//        "luaBundleEntry": "./src/main.ts"
     },
     "include": [
         "src/*.ts"

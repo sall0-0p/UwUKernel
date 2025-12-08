@@ -1,0 +1,15 @@
+{
+  "name": "@uwu/kernel",
+  "version": "0.1.0",
+  "description": "Kernel package of UwUntuCC system.",
+  "main": "main.ts",
+  "scripts": {
+    "build": "tstl"
+  },
+  "devDependencies": {
+    "typescript-to-lua": "^1.33.0",
+    "@jackmacwindows/cc-types": "file:src/types/cc",
+    "@jackmacwindows/craftos-types": "file:src/types/craftos"
+  },
+  "author": "_lordBucket"
+}

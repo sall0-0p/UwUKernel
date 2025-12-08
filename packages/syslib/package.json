@@ -1,0 +1,8 @@
+{
+  "name": "@uwu/syslib",
+  "author": "_lordBucket",
+  "description": "System library bundled with UwUntuCC.",
+  "version": "0.1.0",
+  "main": "src/init.lua",
+  "types": "index.d.ts"
+}

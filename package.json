@@ -1,20 +1,16 @@
 {
-  "name": "cc-tstl-template",
-  "version": "1.113.1",
-  "description": "Template project for ComputerCraft programs written in TypeScript.",
-  "main": "main.ts",
+  "name": "uwu-monorepo",
+  "description": "Monorepo containing UwUntuCC related packages.",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "source deploy.sh",
-    "watch": "nodemon --watch \"src/**/*.ts\" --ext ts --exec \"./deploy.sh\""
+    "build": "npm run build --workspace=@uwu/kernel",
+    "deploy": "./deploy.sh"
   },
   "devDependencies": {
-    "typescript": "^5.1.0",
-    "@jackmacwindows/lua-types": "^2.13.2",
-    "@jackmacwindows/typescript-to-lua": "^1.22.0",
-    "@jackmacwindows/craftos-types": "file:src/types/craftos",
-    "@jackmacwindows/cc-types": "file:src/types/cc"
+    "typescript-to-lua": "^1.33.0",
   },
-  "author": "JackMacWindows",
-  "license": "MIT"
+  "author": "_lordBucket"
 }

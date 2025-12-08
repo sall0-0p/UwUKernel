@@ -1,24 +1,22 @@
-BUILD_DIR="./out"
+DIST_DIR="./dist"
 CRAFTOS_DIR="$HOME/Library/Application Support/CraftOS-PC/computer/0"
-TARGET_DIR_NAME="AlmostOS"
+TARGET_DIR_NAME="UwUntuCC"
 DEST_PATH="$CRAFTOS_DIR/$TARGET_DIR_NAME"
 
-echo "Building project..."
-tstl
+rm -rf "$DIST_DIR"
+mkdir -p "$DIST_DIR"
 
-if [ $? -ne 0 ]; then
-  echo "Build failed! Aborting deploy."
-  exit 1
-fi
+echo "Building Kernel..."
+npm run build --workspace=@uwu/kernel
+cp -R packages/kernel/out/* "$DIST_DIR/"
 
-echo "Deploying to $DEST_PATH"
+echo "Copying Syslib..."
+cp -R packages/syslib/src/* "$DIST_DIR/"
+
+echo "Deploying to Computer..."
+DEST_PATH="$CRAFTOS_DIR/$TARGET_DIR"
 rm -rf "$DEST_PATH"
-cp -R "$BUILD_DIR" "$DEST_PATH"
+mkdir -p "$DEST_PATH"
+cp -R "$DIST_DIR/"* "$DEST_PATH/"
 
-echo "Deploy complete."
-
-# --- Play a success sound ---
-# Note: afplay is a macOS utility. For Linux environments, you would use
-# tools like 'aplay' or 'paplay', or a custom solution.
-# The '&' runs the sound command in the background so the script exits immediately.
 afplay -v 5.0 /System/Library/Sounds/Purr.aiff &
