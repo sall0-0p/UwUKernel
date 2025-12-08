@@ -211,7 +211,7 @@ export namespace EnvironmentFactory {
 
                 joinThread(tid: number) {
                     // @ts-ignore
-                    sys(Syscall.WaitForThread, self);
+                    sys(Syscall.JoinThread, self);
                 }
             },
 

@@ -75,9 +75,10 @@ export class Thread {
         }
 
         setfenv(executable, parent.environment || {});
-        this.thread = coroutine.create(() => {
+        this.thread = coroutine.create((...args: any[]) => {
             // Weird ts bullshit.
-            executable!();
+            // @ts-ignore
+            executable!(...args);
         });
         this.state = ThreadState.Ready;
 
