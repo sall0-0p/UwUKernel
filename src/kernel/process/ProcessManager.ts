@@ -121,10 +121,10 @@ export class ProcessManager {
         if (!joiner) error("Invalid joiner provided.");
 
         if (target.state === ThreadState.Terminated) {
-            this.scheduler.readyThread(target);
+            this.scheduler.readyThread(joiner);
         } else {
             target.joinThread(joiner);
-            this.scheduler.waitForThread(target);
+            this.scheduler.waitForThread(joiner);
         }
     }
 

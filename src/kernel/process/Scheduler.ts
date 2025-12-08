@@ -256,7 +256,8 @@ export class Scheduler {
     public onThreadExit(deadThread: Thread) {
         deadThread.joiners.forEach((joiner) => {
             this.readyThread(joiner);
-        })
+        });
+        deadThread.joiners = [];
     }
 
     // Kill all threads that were related to this process.
@@ -266,8 +267,11 @@ export class Scheduler {
 
         for (const [tid, thread] of this.threads) {
             if (thread.parent.pid === pid) {
-                thread.state = ThreadState.Terminated;
-                this.onThreadExit(thread);
+                if (thread.state !== ThreadState.Terminated) {
+                    thread.state = ThreadState.Terminated;
+                    this.onThreadExit(thread);
+                }
+
                 this.threads.delete(tid);
             }
         }
