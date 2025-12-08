@@ -13,6 +13,7 @@ export enum WaitingReason {
     Sleep = "sleep",
     Event = "event",
     ProcessWait = "processWait",
+    JoinThread = "threadWait",
     Mutex = "mutex",
 }
 
@@ -45,6 +46,9 @@ export class Thread {
     public eventFilter: EventType[] | undefined;
     public waitingReason: WaitingReason | undefined;
     public waitingTimeout: number | undefined;
+
+    // Others
+    public joiners: Thread[] = [];
 
     /**
      * Creates new thread object.
@@ -95,6 +99,10 @@ export class Thread {
     public setPriority(priority: ThreadPriority) {
         const limitedPriority = math.max(0, math.min(priority, 4));
         this.priority = limitedPriority;
+    }
+
+    public joinThread(joiner: Thread) {
+        this.joiners.push(joiner);
     }
 }
 

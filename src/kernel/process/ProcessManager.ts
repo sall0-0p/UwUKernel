@@ -1,11 +1,12 @@
 import {HandleId, PID, Process, ProcessDetails, ProcessState} from "./Process";
-import {Thread} from "./Thread";
+import {Thread, ThreadState, TID} from "./Thread";
 import {EnvironmentFactory} from "../syscall/EnvironmentFactory";
 import {Scheduler} from "./Scheduler";
 import {IHandle} from "../handle/IHandle";
 
 export class ProcessManager {
     public readonly processes: Map<PID, Process> = new Map();
+    public readonly threads: Map<TID, Thread> = new Map();
     private readonly scheduler: Scheduler;
     public constructor(scheduler: Scheduler) {
         this.scheduler = scheduler;
@@ -34,6 +35,7 @@ export class ProcessManager {
 
         const mainThread = new Thread(newProcess, code, args);
         newProcess.addThread(mainThread);
+        this.threads.set(mainThread.tid, mainThread);
 
         this.processes.set(newProcess.pid, newProcess);
         this.scheduler.addThread(mainThread);
@@ -52,6 +54,7 @@ export class ProcessManager {
         parent.addThread(newThread);
 
         this.scheduler.addThread(newThread);
+        this.threads.set(newThread.tid, newThread);
         return newThread;
     }
 
@@ -107,6 +110,22 @@ export class ProcessManager {
         } else {
             this.scheduler.waitForProcess(waitingThread, pid);
             return false;
+        }
+    }
+
+    public joinThread(targetTid: TID, joinerTid: TID): void {
+        const target = this.threads.get(targetTid);
+        const joiner = this.threads.get(joinerTid);
+
+        if (!target) error("Invalid thread provided.");
+        if (!joiner) error("Invalid joiner provided.");
+
+        target.joinThread(joiner);
+
+        if (target.state === ThreadState.Terminated) {
+            this.scheduler.readyThread(target);
+        } else {
+            this.scheduler.waitForThread(target);
         }
     }
 

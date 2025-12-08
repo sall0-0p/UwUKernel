@@ -209,7 +209,7 @@ export namespace EnvironmentFactory {
                     return tid;
                 },
 
-                waitForThread(tid: number) {
+                joinThread(tid: number) {
                     // @ts-ignore
                     sys(Syscall.WaitForThread, self);
                 }

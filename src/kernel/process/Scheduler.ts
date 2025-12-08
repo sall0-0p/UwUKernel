@@ -54,6 +54,7 @@ export class Scheduler {
                         this.executeThread(thread);
                     } else {
                         thread.state = ThreadState.Terminated;
+                        this.onThreadExit(thread);
                     }
                 }
                 runCount--;
@@ -115,6 +116,7 @@ export class Scheduler {
             Logger.info("Thread %s finished execution safely (0)!", thread.tid)
             thread.state = ThreadState.Terminated;
             thread.exitStatus = 0
+            this.onThreadExit(thread);
 
             if (thread.tid === thread.parent.mainThread.tid) {
                 this.processManager.exitProcess(thread.parent.pid, 0, "Main thread finished execution.");
@@ -124,6 +126,7 @@ export class Scheduler {
             Logger.error("Error message: %s", interruptReason);
             thread.state = ThreadState.Terminated;
             thread.exitStatus = 1
+            this.onThreadExit(thread);
 
             this.processManager.exitProcess(thread.parent.pid, 1, interruptReason);
         }
@@ -138,8 +141,6 @@ export class Scheduler {
             switch (thread.waitingReason) {
                 case WaitingReason.Sleep:
                     if (thread.wakeUpAt! < os.epoch("utc")) {
-                        // this.readyThreads.push(thread);
-                        // thread.state = ThreadState.Ready;
                         this.readyThread(thread, [true]);
                     } else {
                         newSleeps.push(thread);
@@ -156,6 +157,9 @@ export class Scheduler {
                     newSleeps.push(thread);
                     break;
                 case WaitingReason.Mutex:
+                    newSleeps.push(thread);
+                    break;
+                case WaitingReason.JoinThread:
                     newSleeps.push(thread);
                     break;
             }
@@ -221,6 +225,13 @@ export class Scheduler {
         this.waitingThreads.push(thread);
     }
 
+    // Wait for thread to finish.
+    public waitForThread(thread: Thread) {
+        thread.state = ThreadState.Waiting;
+        thread.waitingReason = WaitingReason.JoinThread;
+        this.waitingThreads.push(thread);
+    }
+
     // Revive all threads that were waiting for death of the process.
     public onProcessExit(deadPid: number, exitCode: number, exitReason: string, parentPid?: number) {
         const stillWaiting: Thread[] = [];
@@ -242,6 +253,12 @@ export class Scheduler {
         this.waitingThreads = stillWaiting;
     }
 
+    public onThreadExit(deadThread: Thread) {
+        deadThread.joiners.forEach((joiner) => {
+            this.readyThread(joiner);
+        })
+    }
+
     // Kill all threads that were related to this process.
     public killProcessThreads(pid: number) {
         this.waitingThreads = this.waitingThreads.filter(t => t.parent.pid !== pid);
@@ -250,6 +267,7 @@ export class Scheduler {
         for (const [tid, thread] of this.threads) {
             if (thread.parent.pid === pid) {
                 thread.state = ThreadState.Terminated;
+                this.onThreadExit(thread);
                 this.threads.delete(tid);
             }
         }

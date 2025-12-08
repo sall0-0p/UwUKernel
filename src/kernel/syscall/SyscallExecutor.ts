@@ -250,12 +250,19 @@ export class SyscallExecutor {
 
                 const newThread = this.processManager.createThread(func, process, execArgs);
                 this.returnSuccess(thread, newThread.tid);
-
                 break;
             }
 
             case Syscall.JoinThread: {
+                const tid = args[0];
 
+                if (!tid) {
+                    this.returnError(thread, "Tid has to be specified");
+                    break;
+                }
+
+                this.processManager.joinThread(tid, thread.tid);
+                break;
             }
 
             // Filesystem
