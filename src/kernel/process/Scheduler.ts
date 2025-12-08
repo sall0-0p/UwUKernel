@@ -255,7 +255,9 @@ export class Scheduler {
 
     public onThreadExit(deadThread: Thread) {
         deadThread.joiners.forEach((joiner) => {
-            this.readyThread(joiner);
+            if (joiner.state !== ThreadState.Terminated) {
+                this.readyThread(joiner);
+            }
         });
         deadThread.joiners = [];
     }
