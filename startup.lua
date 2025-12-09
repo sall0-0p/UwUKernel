@@ -1,0 +1,1 @@
+shell.run("/System/Kernel/main.lua")

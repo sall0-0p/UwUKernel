@@ -418,6 +418,17 @@ export namespace EnvironmentFactory {
             math: math,
             table: table,
             unpack: unpack,
+            string: string,
+
+            package: {
+                path: "",
+                loaded: new Map<string, any>(),
+            },
+
+            require(path: string): any {
+                // @ts-ignore
+                return require(self, process);
+            }
         }
     }
 }

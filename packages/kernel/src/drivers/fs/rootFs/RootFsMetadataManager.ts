@@ -163,12 +163,7 @@ export class RootFsMetadataManager {
             const uPerm = tonumber(mask.charAt(1));
             const gPerm = tonumber(mask.charAt(2));
             const wPerm = tonumber(mask.charAt(3));
-            const permissions = bit32.bor(
-                bit32.lshift(sPerm!, 9),
-                bit32.lshift(uPerm!, 6),
-                bit32.lshift(gPerm!, 3),
-                wPerm!
-            );
+            const permissions = (sPerm! << 9) | (uPerm! << 6) | (gPerm! << 3) | wPerm!;
 
             if (!["f", "d", "s", "m"].includes(type)) continue;
 
@@ -233,10 +228,10 @@ export class RootFsMetadataManager {
 
         file.writeLine(`${metadata.magic}:${metadata.version}`);
         for (const entry of metadata.data.values()) {
-            const sPerm = bit32.band(bit32.rshift(entry.permissions, 9), 7);
-            const uPerm = bit32.band(bit32.rshift(entry.permissions, 6), 7);
-            const gPerm = bit32.band(bit32.rshift(entry.permissions, 3), 7);
-            const wPerm = bit32.band(entry.permissions, 7);
+            const sPerm = (entry.permissions >>> 9) & 7;
+            const uPerm = (entry.permissions >>> 6) & 7;
+            const gPerm = (entry.permissions >>> 3) & 7;
+            const wPerm = entry.permissions & 7;
 
             const mask = `${sPerm}${uPerm}${gPerm}${wPerm}`;
 

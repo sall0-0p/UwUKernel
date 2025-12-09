@@ -7,10 +7,8 @@
   ],
   "scripts": {
     "build": "npm run build --workspace=@uwu/kernel",
+    "watch": "nodemon --watch packages/kernel --watch packages/syslib --watch startup.lua --watch test.lua --ext ts,lua --ignore \"packages/kernel/out\" --exec \"./deploy.sh\"",
     "deploy": "./deploy.sh"
-  },
-  "devDependencies": {
-    "typescript-to-lua": "^1.33.0",
   },
   "author": "_lordBucket"
 }

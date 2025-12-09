@@ -7,9 +7,10 @@
     "build": "tstl"
   },
   "devDependencies": {
-    "typescript-to-lua": "^1.33.0",
     "@jackmacwindows/cc-types": "file:src/types/cc",
-    "@jackmacwindows/craftos-types": "file:src/types/craftos"
+    "@jackmacwindows/craftos-types": "file:src/types/craftos",
+    "@jackmacwindows/lua-types": "^2.13.2",
+    "@jackmacwindows/typescript-to-lua": "^1.22.0"
   },
   "author": "_lordBucket"
 }

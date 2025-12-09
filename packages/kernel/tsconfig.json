@@ -5,7 +5,11 @@
         "lib": ["ESNext"],
         "moduleResolution": "node",
         "strict": true,
-        "types": ["@jackmacwindows/lua-types/cc-5.2", "@jackmacwindows/craftos-types", "@jackmacwindows/cc-types"],
+        "types": [
+            "@jackmacwindows/lua-types/cc-5.2",
+            "@jackmacwindows/craftos-types",
+            "@jackmacwindows/cc-types"
+        ],
         "rootDir": "./src",
         "outDir": "./out"
     },

@@ -1,11 +1,11 @@
-import {Scheduler} from "./kernel/process/Scheduler";
-import {ProcessManager} from "./kernel/process/ProcessManager";
-import {EventManager} from "./kernel/event/EventManager";
-import {Logger} from "./kernel/lib/Logger";
-import {SyscallExecutor} from "./kernel/syscall/SyscallExecutor";
-import {VFSManager} from "./kernel/vfs/VFSManager";
-import {RomFSDriver} from "./kernel/drivers/fs/RomFsDriver";
-import {RootFsDriver} from "./kernel/drivers/fs/rootFs/RootFsDriver";
+import {Scheduler} from "./process/Scheduler";
+import {ProcessManager} from "./process/ProcessManager";
+import {EventManager} from "./event/EventManager";
+import {Logger} from "./lib/Logger";
+import {SyscallExecutor} from "./syscall/SyscallExecutor";
+import {VFSManager} from "./vfs/VFSManager";
+import {RomFSDriver} from "./drivers/fs/RomFsDriver";
+import {RootFsDriver} from "./drivers/fs/rootFs/RootFsDriver";
 
 Logger.init();
 Logger.info("Hallo!");
@@ -214,7 +214,7 @@ scheduler.syscallExecutor = se;
 // // const processLast = pm.createProcess("/", "Last process", processTest);
 
 pm.createProcess("/", "system", `
-    os.createProcess("/hello.lua", "launchd");
+    os.createProcess("/test.lua", "launchd");
 `)
 
 scheduler.run();
