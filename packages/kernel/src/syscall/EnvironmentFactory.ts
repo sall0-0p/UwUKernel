@@ -2,6 +2,7 @@ import {HandleId, Process, ProcessDetails} from "../process/Process";
 import {Syscall} from "./Syscall";
 import {IEvent} from "../event/Event";
 
+const DEFAULT_PACKAGE_PATH = "/?.lua;/?/init.lua;/System/Library/?/init.lua";
 export namespace EnvironmentFactory {
     function sys(id: Syscall, ...args: any[]): any[] {
         const [success, ...results] = coroutine.yield("syscall", id, ...args);
@@ -9,6 +10,138 @@ export namespace EnvironmentFactory {
             error(results[0], 2);
         }
         return results;
+    }
+
+    function normalizePath(path: string) {
+        const parts: string[] = [];
+        for (const [part] of string.gmatch(path, "([^/]+)")) {
+            parts.push(part);
+        }
+
+        const stack: string[] = [];
+        for (const part of parts) {
+            if (part === "" || part === ".") continue;
+            if (part === "..") {
+                if (stack.length > 0) stack.pop();
+            } else {
+                stack.push(part);
+            }
+        }
+
+        return "/" + stack.join("/");
+    }
+
+    function getCycleTrace(loadingMap: Record<string, string>, currentModule: string, targetModule: string): string {
+        let trace = `\n1. ${targetModule}`;
+        let current = currentModule;
+        let step = 2;
+
+        while (current && current !== "ROOT") {
+            trace += `\n${step}. ${current} (imports previous)`;
+            if (current === targetModule) break;
+
+            current = loadingMap[current];
+            step++;
+        }
+
+        return trace;
+    }
+
+    function require(moduleName: string, process: Process) {
+        let searchPaths: string[] = [];
+
+        const pkg = process.environment.package;
+
+        let callerPath = "ROOT";
+        const callerInfo = debug.getinfo(2, "S");
+        if (callerInfo && callerInfo.source && callerInfo.source.startsWith("@")) {
+            callerPath = normalizePath(callerInfo.source.substring(1));
+        }
+
+        if (moduleName.startsWith("/")) {
+            const normalized = normalizePath(moduleName);
+            searchPaths.push(normalized);
+            searchPaths.push(normalized + ".lua");
+        } else if (moduleName.startsWith(".")) {
+            const info = debug.getinfo(2, "S");
+            const source = info?.source;
+            if (!source) error("Failed to determine source file!", 2);
+
+            let currentDir = "/";
+            if (source.startsWith("@")) {
+                const filePath = source.substring(1);
+                const [match] = string.match(filePath, "^(.+)/");
+                if (match) {
+                    currentDir = match;
+                }
+            }
+
+            const normalized = normalizePath(currentDir + "/" + moduleName);
+            searchPaths.push(normalized);
+            searchPaths.push(normalized + ".lua");
+        } else {
+            const [modulePath] = string.gsub(moduleName, "%.", "/");
+
+            const templates: string[] = [];
+            for (const [template] of string.gmatch(pkg.path, "([^;]+)")) {
+                templates.push(template);
+            }
+
+            for (const template of templates) {
+                const path = template.replace("?", modulePath);
+
+                const normalized = normalizePath(path);
+                searchPaths.push(normalized);
+                searchPaths.push(normalized + ".lua");
+            }
+        }
+
+        for (const path of searchPaths) {
+            if (pkg.loaded[path] !== undefined) {
+                return pkg.loaded[path];
+            }
+
+            if (pkg.loading[path]) {
+                const trace = getCycleTrace(pkg.loading, callerPath, path);
+                error(`Circular dependency detected: '${callerPath}' tried to require '${path}' which is already loading. Require trace:${trace}`, 2);
+            }
+
+            const [exists] = sys(Syscall.FsExists, path);
+            if (exists) {
+                const [isDir] = sys(Syscall.FsIsDir, path);
+
+                if (!isDir) {
+                    pkg.loading[path] = callerPath;
+
+                    const [handleId] = sys(Syscall.FsOpen, path, "r");
+                    const [content] = sys(Syscall.rHandleReadAll, handleId);
+                    sys(Syscall.aHandleClose, handleId);
+
+                    if (typeof content !== "string") {
+                        error(`Failed to read module: ${path}`, 2);
+                    }
+
+                    const [chunk, err] = loadstring(content, "@" + path);
+                    if (!chunk) {
+                        error(`Error loading module ${moduleName}: ${err}`, 2);
+                    }
+                    setfenv(chunk, process.environment);
+
+                    const result = chunk();
+                    if (result !== undefined) {
+                        pkg.loaded[path] = result;
+                    }
+
+                    const finalResult = result !== undefined ? result : true;
+                    pkg.loaded[path] = finalResult;
+
+                    pkg.loading[path] = undefined;
+                    return finalResult;
+                }
+            }
+        }
+
+        error(`Module '${moduleName}' not found`, 2);
     }
 
     export function getEnvironment(process: Process): object {
@@ -419,10 +552,13 @@ export namespace EnvironmentFactory {
             table: table,
             unpack: unpack,
             string: string,
+            pcall: pcall,
+            tostring: tostring,
 
             package: {
-                path: "",
-                loaded: new Map<string, any>(),
+                path: DEFAULT_PACKAGE_PATH,
+                loaded: {},
+                loading: {},
             },
 
             require(path: string): any {
