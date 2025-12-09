@@ -35,7 +35,7 @@ export class Process {
     public mainThread!: Thread;
 
     private handles: Map<HandleId, IHandle> = new Map();
-    public environment: object | undefined;
+    public environment: any | undefined;
     public environmentVariables: Map<string, any>;
     public workingDir: string;
     public rawInputMode: boolean = false;
