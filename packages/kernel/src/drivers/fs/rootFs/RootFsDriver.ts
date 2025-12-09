@@ -1,4 +1,4 @@
-import {FsOpenMode, IFsDriver} from "../../../vfs/IFsDriver";
+import {FsOpenMode, IFsActionContext, IFsDriver} from "../../../vfs/IFsDriver";
 import {IFileMetadata} from "../../../vfs/IFileMetadata";
 import {IFsStateStream} from "../../../vfs/IFsStateStream";
 import {RootFsStateStream} from "./RootFsStateStream";
@@ -21,7 +21,7 @@ export class RootFsDriver implements IFsDriver {
         return fs.exists(path);
     }
 
-    open(path: string, mode: FsOpenMode, process?: Process): IFsStateStream | undefined {
+    open(path: string, mode: FsOpenMode, context?: IFsActionContext): IFsStateStream | undefined {
         path = "/" + fs.combine(this.physicalRoot, path);
         const alreadyExists = fs.exists(path);
 
@@ -33,8 +33,8 @@ export class RootFsDriver implements IFsDriver {
             if (!alreadyExists && (mode === FsOpenMode.Write || mode === FsOpenMode.Append)) {
                 this.metadataManager.set(path, {
                     type: "f",
-                    owner: process ? process.euid : 0,
-                    group: process ? process.gid : 0,
+                    owner: context ? context.euid : 0,
+                    group: context ? context.gid : 0,
                     permissions: 0o644, // Default file permissions
                     created: os.epoch("utc"),
                     modified: os.epoch("utc"),
@@ -61,6 +61,19 @@ export class RootFsDriver implements IFsDriver {
         path = "/" + fs.combine(this.physicalRoot, path);
         if (path.endsWith(".fs_meta")) error("Cannot overwrite .fs_meta");
         fs.makeDir(path);
+
+        this.metadataManager.set(path, {
+            type: "d",
+            owner: 0,
+            group: 0,
+            permissions: 0o755,
+            created: os.epoch("utc"),
+            modified: os.epoch("utc"),
+            isDirectory: true,
+            isSystem: false,
+            isReadOnly: false,
+            size: 0
+        });
     }
 
     move(from: string, to: string): void {

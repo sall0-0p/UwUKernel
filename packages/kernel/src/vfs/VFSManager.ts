@@ -1,4 +1,4 @@
-import {FsOpenMode, IFsDriver} from "./IFsDriver";
+import {FsOpenMode, IFsActionContext, IFsDriver} from "./IFsDriver";
 import {FileHandle} from "../handle/FileHandle";
 import {IFileMetadata} from "./IFileMetadata";
 import {IFsStateStream} from "./IFsStateStream";
@@ -78,8 +78,18 @@ export class VFSManager {
             if (process && !this.checkPermissions(this.getMetadata(path), FsOpenMode.Execute, process)) error("No permissions.");
         }
 
+        let context: IFsActionContext | undefined;
+        if (process) {
+            context = {
+                uid: process.uid,
+                euid: process.euid,
+                gid: process.gid,
+                groups: process.groups
+            }
+        }
+
         if (mode === FsOpenMode.Execute) mode = FsOpenMode.Read;
-        const stream = resolved.driver.open(resolved.relativePath, mode);
+        const stream = resolved.driver.open(resolved.relativePath, mode, context);
         if (!stream) error("Could not open file");
 
         return new FileHandle(stream);
@@ -166,6 +176,13 @@ export class VFSManager {
 
         try {
             resolved.driver.mkdir(resolved.relativePath);
+
+            if (process) {
+                resolved.driver.setMetadata(resolved.relativePath, {
+                    owner: process.euid,
+                    group: process.gid,
+                });
+            }
             return;
         } catch (e: any) {
             error(e.message || "Unknown error");

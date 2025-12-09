@@ -1,6 +1,5 @@
 import {IFsStateStream} from "./IFsStateStream";
 import {IFileMetadata} from "./IFileMetadata";
-import {Process} from "../process/Process";
 
 export enum FsOpenMode {
     Read = "r",
@@ -9,11 +8,18 @@ export enum FsOpenMode {
     Execute = "x",
 }
 
+export interface IFsActionContext {
+    uid: number,
+    euid: number,
+    gid: number,
+    groups: number[],
+}
+
 export interface IFsDriver {
     readonly id: string;
     readonly isReadOnly: boolean;
     exists(path: string): boolean;
-    open(path: string, mode: FsOpenMode, process?: Process): IFsStateStream | undefined;
+    open(path: string, mode: FsOpenMode, context?: IFsActionContext): IFsStateStream | undefined;
     list(path: string): string[];
     mkdir(path: string): void;
     delete(path: string): void;
