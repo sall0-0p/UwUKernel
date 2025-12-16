@@ -14,7 +14,8 @@ npm run build --workspace=@uwu/kernel
 cp -R packages/kernel/out/* "$DIST_DIR/System/Kernel"
 
 echo "Copying Syslib..."
-cp -R packages/syslib/src/* "$DIST_DIR/System/Library"
+mkdir -p "$DIST_DIR/System/Library/stdlib"
+cp -R packages/syslib/src/* "$DIST_DIR/System/Library/stdlib"
 
 echo "Deploying to Computer..."
 DEST_PATH="$CRAFTOS_DIR/$TARGET_DIR"

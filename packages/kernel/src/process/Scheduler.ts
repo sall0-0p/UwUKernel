@@ -27,6 +27,7 @@ export class Scheduler {
         this.threads.set(thread.tid, thread);
         if (thread.state === "READY") {
             this.readyThreads.push(thread);
+            os.queueEvent("scheduler_yield");
         }
     }
 
